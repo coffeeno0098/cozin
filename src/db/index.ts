@@ -7,8 +7,21 @@ const globalForDb = globalThis as unknown as {
   sql?: postgres.Sql;
 };
 
-const databaseUrl =
-  process.env.DATABASE_URL ?? "postgresql://postgres:postgres@localhost:5432/cozin";
+const fallbackDatabaseUrl = "postgresql://postgres:postgres@localhost:5432/cozin";
+
+function getDatabaseUrl() {
+  if (!process.env.DATABASE_URL) {
+    return fallbackDatabaseUrl;
+  }
+
+  try {
+    return new URL(process.env.DATABASE_URL).toString();
+  } catch {
+    return fallbackDatabaseUrl;
+  }
+}
+
+const databaseUrl = getDatabaseUrl();
 
 const sql =
   globalForDb.sql ??
