@@ -62,7 +62,7 @@ export default async function AdminPage() {
           })}
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-3">
           <div className="rounded-lg border p-5">
             <h2 className="font-semibold">Products</h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
@@ -79,6 +79,15 @@ export default async function AdminPage() {
             </p>
             <Button className="mt-5" variant="outline" asChild>
               <Link href="/admin/codes">Manage codes</Link>
+            </Button>
+          </div>
+          <div className="rounded-lg border p-5">
+            <h2 className="font-semibold">Orders</h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Review fulfilled purchases, delivered code credentials, and customer order history.
+            </p>
+            <Button className="mt-5" variant="outline" asChild>
+              <Link href="/admin/orders">View orders</Link>
             </Button>
           </div>
         </div>

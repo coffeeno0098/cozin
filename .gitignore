@@ -45,6 +45,7 @@ yarn-error.log*
 # local dev server logs
 .next-dev.*.log
 .edge-test-profile/
+topup-truewallet/
 
 # vercel
 .vercel

@@ -6,8 +6,7 @@ const envSchema = z.object({
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1).optional(),
   AUTH_SECRET: z.string().min(1).optional(),
   AUTH_URL: z.string().url().optional(),
-  TRUEMONEY_API_URL: z.string().url().optional(),
-  TRUEMONEY_API_KEY: z.string().min(1).optional(),
+  TRUEMONEY_RECEIVER_PHONE: z.string().min(8).optional(),
 });
 
 export const env = envSchema.parse(process.env);

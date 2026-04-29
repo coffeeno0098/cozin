@@ -41,6 +41,15 @@ export default async function AccountPage() {
             <h1 className="text-2xl font-semibold">{user.username}</h1>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <Button variant="ghost" asChild>
+              <Link href="/products">Products</Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link href="/topup">Top up</Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link href="/orders">Purchase history</Link>
+            </Button>
             {user.role === "admin" ? (
               <Button asChild>
                 <Link href="/admin">Admin dashboard</Link>
@@ -67,14 +76,6 @@ export default async function AccountPage() {
             <p className="text-sm text-muted-foreground">Role</p>
             <p className="mt-2 text-sm font-medium">{user.role}</p>
           </div>
-        </div>
-
-        <div className="rounded-lg border p-5">
-          <h2 className="font-semibold">Purchase history</h2>
-          <p className="mt-2 text-sm text-muted-foreground">View purchased Roblox IDs and passwords.</p>
-          <Button className="mt-4" variant="outline" asChild>
-            <Link href="/orders">View orders</Link>
-          </Button>
         </div>
 
         {user.role === "admin" ? (

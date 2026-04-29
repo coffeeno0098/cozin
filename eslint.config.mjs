@@ -11,6 +11,7 @@ const eslintConfig = defineConfig([
     ".next/**",
     "out/**",
     "build/**",
+    "topup-truewallet/**",
     "next-env.d.ts",
   ]),
 ]);
