@@ -111,12 +111,28 @@ export const authenticators = pgTable(
   ],
 );
 
+export const gameMaps = pgTable(
+  "game_maps",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("game_maps_name_unique").on(table.name),
+    uniqueIndex("game_maps_slug_unique").on(table.slug),
+  ],
+);
+
 export const products = pgTable(
   "products",
   {
     id: uuid("id").defaultRandom().primaryKey(),
     slug: text("slug").notNull(),
     name: text("name").notNull(),
+    mapId: uuid("map_id").references(() => gameMaps.id, { onDelete: "restrict" }),
     gameMap: text("game_map").notNull(),
     description: text("description"),
     pricePoints: integer("price_points").notNull(),

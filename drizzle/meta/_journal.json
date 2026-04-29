@@ -8,6 +8,13 @@
       "when": 1777468870503,
       "tag": "0000_spooky_hex",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777483339211,
+      "tag": "0001_bent_goliath",
+      "breakpoints": true
     }
   ]
 }

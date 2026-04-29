@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { logoutAction } from "@/app/(auth)/actions";
@@ -34,16 +35,23 @@ export default async function AccountPage() {
   return (
     <main className="min-h-screen bg-background px-6 py-8 text-foreground">
       <section className="mx-auto w-full max-w-3xl space-y-6">
-        <div className="flex items-center justify-between border-b pb-5">
+        <div className="flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm text-muted-foreground">Cozin account</p>
             <h1 className="text-2xl font-semibold">{user.username}</h1>
           </div>
-          <form action={logoutAction}>
-            <Button type="submit" variant="outline">
-              ออกจากระบบ
-            </Button>
-          </form>
+          <div className="flex flex-wrap items-center gap-2">
+            {user.role === "admin" ? (
+              <Button asChild>
+                <Link href="/admin">Admin dashboard</Link>
+              </Button>
+            ) : null}
+            <form action={logoutAction}>
+              <Button type="submit" variant="outline">
+                Logout
+              </Button>
+            </form>
+          </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
@@ -53,13 +61,40 @@ export default async function AccountPage() {
           </div>
           <div className="rounded-lg border p-5">
             <p className="text-sm text-muted-foreground">Email</p>
-            <p className="mt-2 break-all text-sm font-medium">{user.email ?? "ยังไม่ได้ใส่"}</p>
+            <p className="mt-2 break-all text-sm font-medium">{user.email ?? "Not set"}</p>
           </div>
           <div className="rounded-lg border p-5">
             <p className="text-sm text-muted-foreground">Role</p>
             <p className="mt-2 text-sm font-medium">{user.role}</p>
           </div>
         </div>
+
+        <div className="rounded-lg border p-5">
+          <h2 className="font-semibold">Purchase history</h2>
+          <p className="mt-2 text-sm text-muted-foreground">View purchased Roblox IDs and passwords.</p>
+          <Button className="mt-4" variant="outline" asChild>
+            <Link href="/orders">View orders</Link>
+          </Button>
+        </div>
+
+        {user.role === "admin" ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-lg border p-5">
+              <h2 className="font-semibold">Products</h2>
+              <p className="mt-2 text-sm text-muted-foreground">Add products, set prices, and control visibility.</p>
+              <Button className="mt-4" asChild>
+                <Link href="/admin/products">Manage products</Link>
+              </Button>
+            </div>
+            <div className="rounded-lg border p-5">
+              <h2 className="font-semibold">Game codes</h2>
+              <p className="mt-2 text-sm text-muted-foreground">Add ID and password stock for products.</p>
+              <Button className="mt-4" variant="outline" asChild>
+                <Link href="/admin/codes">Manage codes</Link>
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </section>
     </main>
   );
