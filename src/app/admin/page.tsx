@@ -1,4 +1,4 @@
-import { count } from "drizzle-orm";
+import { count, sql } from "drizzle-orm";
 import { BadgeCheck, Box, Coins, ReceiptText, Users } from "lucide-react";
 import Link from "next/link";
 
@@ -25,6 +25,14 @@ export default async function AdminPage() {
     getCount(orders),
     getCount(payments),
   ]);
+
+  const [stockSummary] = await db
+    .select({
+      available: sql<number>`coalesce(count(${gameCodes.id}) filter (where ${gameCodes.status} = 'available'), 0)::int`,
+      sold: sql<number>`coalesce(count(${gameCodes.id}) filter (where ${gameCodes.status} = 'sold'), 0)::int`,
+      reserved: sql<number>`coalesce(count(${gameCodes.id}) filter (where ${gameCodes.status} = 'reserved'), 0)::int`,
+    })
+    .from(gameCodes);
 
   const stats = [
     { label: "Users", value: userCount, icon: Users },
@@ -98,6 +106,32 @@ export default async function AdminPage() {
             <Button className="mt-5" variant="outline" asChild>
               <Link href="/admin/payments">View payments</Link>
             </Button>
+          </div>
+        </div>
+
+        <div className="rounded-lg border p-5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="font-semibold">Stock overview</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Current game-code status across the store.</p>
+            </div>
+            <Button variant="outline" asChild>
+              <Link href="/admin/codes">Manage stock</Link>
+            </Button>
+          </div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-800">
+              <p className="text-xs">Available</p>
+              <p className="mt-1 text-2xl font-semibold">{stockSummary.available}</p>
+            </div>
+            <div className="rounded-md border px-3 py-2">
+              <p className="text-xs text-muted-foreground">Sold</p>
+              <p className="mt-1 text-2xl font-semibold">{stockSummary.sold}</p>
+            </div>
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800">
+              <p className="text-xs">Reserved</p>
+              <p className="mt-1 text-2xl font-semibold">{stockSummary.reserved}</p>
+            </div>
           </div>
         </div>
 

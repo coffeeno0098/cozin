@@ -18,6 +18,27 @@ type ProductsPageProps = {
 
 export const dynamic = "force-dynamic";
 
+function getStockBadge(availableCodes: number) {
+  if (availableCodes === 0) {
+    return {
+      label: "Out of stock",
+      className: "border-destructive/30 bg-destructive/10 text-destructive",
+    };
+  }
+
+  if (availableCodes <= 2) {
+    return {
+      label: "Low stock",
+      className: "border-amber-200 bg-amber-50 text-amber-800",
+    };
+  }
+
+  return {
+    label: "In stock",
+    className: "border-emerald-200 bg-emerald-50 text-emerald-800",
+  };
+}
+
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
   await requireAdmin();
 
@@ -31,11 +52,14 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       description: products.description,
       pricePoints: products.pricePoints,
       isActive: products.isActive,
-      availableCodes: count(gameCodes.id),
+      availableCodes: sql<number>`coalesce(count(${gameCodes.id}) filter (where ${gameCodes.status} = 'available'), 0)::int`,
+      soldCodes: sql<number>`coalesce(count(${gameCodes.id}) filter (where ${gameCodes.status} = 'sold'), 0)::int`,
+      reservedCodes: sql<number>`coalesce(count(${gameCodes.id}) filter (where ${gameCodes.status} = 'reserved'), 0)::int`,
+      totalCodes: count(gameCodes.id),
     })
     .from(products)
     .leftJoin(gameMaps, eq(products.mapId, gameMaps.id))
-    .leftJoin(gameCodes, sql`${gameCodes.productId} = ${products.id} and ${gameCodes.status} = 'available'`)
+    .leftJoin(gameCodes, eq(gameCodes.productId, products.id))
     .groupBy(products.id, gameMaps.id)
     .orderBy(asc(products.createdAt));
 
@@ -171,8 +195,11 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             {productRows.length === 0 ? (
               <div className="rounded-lg border p-5 text-sm text-muted-foreground">No products yet.</div>
             ) : (
-              productRows.map((product) => (
-                <div key={product.id} className="rounded-lg border p-5">
+              productRows.map((product) => {
+                const stockBadge = getStockBadge(product.availableCodes);
+
+                return (
+                  <div key={product.id} className="rounded-lg border p-5">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
@@ -180,20 +207,33 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                         <span className="rounded-md bg-secondary px-2 py-1 text-xs text-secondary-foreground">
                           {product.isActive ? "Active" : "Hidden"}
                         </span>
+                        <span className={`rounded-md border px-2 py-1 text-xs ${stockBadge.className}`}>
+                          {stockBadge.label}
+                        </span>
                       </div>
                       <p className="mt-1 text-sm text-muted-foreground">{product.gameMap}</p>
                       {product.description ? (
                         <p className="mt-3 text-sm leading-6 text-muted-foreground">{product.description}</p>
                       ) : null}
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-right sm:min-w-40">
+                    <div className="grid grid-cols-2 gap-2 text-right sm:min-w-64">
                       <div className="rounded-md border px-3 py-2">
                         <p className="text-xs text-muted-foreground">Price</p>
                         <p className="font-semibold">{product.pricePoints}</p>
                       </div>
                       <div className="rounded-md border px-3 py-2">
-                        <p className="text-xs text-muted-foreground">Stock</p>
+                        <p className="text-xs text-muted-foreground">Available</p>
                         <p className="font-semibold">{product.availableCodes}</p>
+                      </div>
+                      <div className="rounded-md border px-3 py-2">
+                        <p className="text-xs text-muted-foreground">Sold</p>
+                        <p className="font-semibold">{product.soldCodes}</p>
+                      </div>
+                      <div className="rounded-md border px-3 py-2">
+                        <p className="text-xs text-muted-foreground">Reserved / Total</p>
+                        <p className="font-semibold">
+                          {product.reservedCodes} / {product.totalCodes}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -205,7 +245,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                     </Button>
                   </form>
                 </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

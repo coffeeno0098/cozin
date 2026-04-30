@@ -16,6 +16,24 @@ type CodesPageProps = {
 
 export const dynamic = "force-dynamic";
 
+function getStatusClass(status: "available" | "reserved" | "sold") {
+  if (status === "available") return "border-emerald-200 bg-emerald-50 text-emerald-800";
+  if (status === "reserved") return "border-amber-200 bg-amber-50 text-amber-800";
+  return "border-border bg-secondary text-secondary-foreground";
+}
+
+function getStockLabel(availableCodes: number) {
+  if (availableCodes === 0) return "Out of stock";
+  if (availableCodes <= 2) return "Low stock";
+  return "Ready";
+}
+
+function getStockClass(availableCodes: number) {
+  if (availableCodes === 0) return "border-destructive/30 bg-destructive/10 text-destructive";
+  if (availableCodes <= 2) return "border-amber-200 bg-amber-50 text-amber-800";
+  return "border-emerald-200 bg-emerald-50 text-emerald-800";
+}
+
 export default async function CodesPage({ searchParams }: CodesPageProps) {
   await requireAdmin();
 
@@ -26,9 +44,15 @@ export default async function CodesPage({ searchParams }: CodesPageProps) {
       name: products.name,
       gameMap: sql<string>`coalesce(${gameMaps.name}, ${products.gameMap})`,
       isActive: products.isActive,
+      availableCodes: sql<number>`coalesce(count(${gameCodes.id}) filter (where ${gameCodes.status} = 'available'), 0)::int`,
+      soldCodes: sql<number>`coalesce(count(${gameCodes.id}) filter (where ${gameCodes.status} = 'sold'), 0)::int`,
+      reservedCodes: sql<number>`coalesce(count(${gameCodes.id}) filter (where ${gameCodes.status} = 'reserved'), 0)::int`,
+      totalCodes: sql<number>`coalesce(count(${gameCodes.id}), 0)::int`,
     })
     .from(products)
     .leftJoin(gameMaps, eq(products.mapId, gameMaps.id))
+    .leftJoin(gameCodes, eq(gameCodes.productId, products.id))
+    .groupBy(products.id, gameMaps.id)
     .orderBy(asc(products.name));
 
   const codeRows = await db
@@ -83,7 +107,7 @@ export default async function CodesPage({ searchParams }: CodesPageProps) {
                 <option value="">Select product</option>
                 {productRows.map((product) => (
                   <option key={product.id} value={product.id}>
-                    {product.name} - {product.gameMap}
+                    {product.name} - {product.gameMap} ({product.availableCodes} available)
                   </option>
                 ))}
               </select>
@@ -105,6 +129,48 @@ export default async function CodesPage({ searchParams }: CodesPageProps) {
           </form>
 
           <div className="space-y-3">
+            <div className="rounded-lg border p-5">
+              <h2 className="font-semibold">Product stock summary</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Use this to decide which products need more codes.</p>
+              {productRows.length === 0 ? (
+                <p className="mt-4 text-sm text-muted-foreground">Create a product before tracking stock.</p>
+              ) : (
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  {productRows.map((product) => (
+                    <div key={product.id} className="rounded-md border px-3 py-2">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="text-sm font-medium">{product.name}</h3>
+                          <p className="mt-1 text-xs text-muted-foreground">{product.gameMap}</p>
+                        </div>
+                        <span className={`rounded-md border px-2 py-1 text-xs ${getStockClass(product.availableCodes)}`}>
+                          {getStockLabel(product.availableCodes)}
+                        </span>
+                      </div>
+                      <div className="mt-3 grid grid-cols-4 gap-2 text-center text-xs">
+                        <div>
+                          <p className="text-muted-foreground">Avail</p>
+                          <p className="mt-1 font-semibold">{product.availableCodes}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Sold</p>
+                          <p className="mt-1 font-semibold">{product.soldCodes}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Hold</p>
+                          <p className="mt-1 font-semibold">{product.reservedCodes}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Total</p>
+                          <p className="mt-1 font-semibold">{product.totalCodes}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {codeRows.length === 0 ? (
               <div className="rounded-lg border p-5 text-sm text-muted-foreground">No codes in stock yet.</div>
             ) : (
@@ -115,7 +181,7 @@ export default async function CodesPage({ searchParams }: CodesPageProps) {
                       <h3 className="font-semibold">{code.productName}</h3>
                       <p className="text-sm text-muted-foreground">{code.gameMap}</p>
                     </div>
-                    <span className="w-fit rounded-md bg-secondary px-2 py-1 text-xs text-secondary-foreground">
+                    <span className={`w-fit rounded-md border px-2 py-1 text-xs ${getStatusClass(code.status)}`}>
                       {code.status}
                     </span>
                   </div>
