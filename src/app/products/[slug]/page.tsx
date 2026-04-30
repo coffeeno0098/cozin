@@ -1,12 +1,10 @@
 import { eq, sql } from "drizzle-orm";
-import { ArrowLeft, Box, Coins, History, LockKeyhole, ShoppingCart, Truck } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { buyProductAction } from "@/app/products/actions";
 import { auth } from "@/auth";
 import { AnnouncementBar } from "@/components/announcement-bar";
-import { Button } from "@/components/ui/button";
 import { db } from "@/db";
 import { gameCodes, gameMaps, products, users } from "@/db/schema";
 
@@ -31,24 +29,24 @@ const errorMessages: Record<string, string> = {
 function getStockStatus(availableCodes: number) {
   if (availableCodes === 0) {
     return {
-      label: "Out of stock",
+      label: "Out of Stock",
       description: "This product is temporarily unavailable.",
-      className: "border-destructive/30 bg-destructive/10 text-destructive",
+      badgeClass: "badge-error",
     };
   }
 
   if (availableCodes <= 2) {
     return {
-      label: "Low stock",
+      label: "Low Stock",
       description: "Only a small amount is available.",
-      className: "border-amber-200 bg-amber-50 text-amber-800",
+      badgeClass: "badge-warning",
     };
   }
 
   return {
-    label: "In stock",
+    label: "In Stock",
     description: "Ready for automatic delivery.",
-    className: "border-emerald-200 bg-emerald-50 text-emerald-800",
+    badgeClass: "badge-success",
   };
 }
 
@@ -101,138 +99,164 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
   const errorMessage = query?.error ? errorMessages[query.error] : null;
 
   return (
-    <main className="min-h-screen bg-background px-6 py-8 text-foreground">
-      <section className="mx-auto w-full max-w-4xl space-y-8">
-        <Button variant="ghost" asChild>
-          <Link href="/products">
-            <ArrowLeft className="size-4" />
-            Back to products
-          </Link>
-        </Button>
-        <AnnouncementBar />
+    <>
+      {/* ── Sub-nav ── */}
+      <div className="global-nav">
+        <Link href="/" className="text-nav-link font-semibold uppercase tracking-wide" translate="no">
+          Cozin
+        </Link>
+        <Link
+          href="/products"
+          className="text-nav-link opacity-85 hover:opacity-100"
+        >
+          ← Back to Products
+        </Link>
+      </div>
+      <AnnouncementBar />
 
-        <div className="rounded-lg border bg-card p-6 text-card-foreground shadow-sm">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="text-sm text-muted-foreground">{product.gameMap}</p>
-                <span className={`rounded-md border px-2 py-1 text-xs ${stockStatus.className}`}>
-                  {stockStatus.label}
-                </span>
-              </div>
-              <h1 className="mt-2 text-3xl font-semibold tracking-normal">{product.name}</h1>
-              {product.description ? (
-                <p className="mt-4 max-w-2xl text-sm leading-6 text-muted-foreground">{product.description}</p>
-              ) : null}
-            </div>
-            <div className="rounded-md bg-secondary px-4 py-3 text-right">
-              <p className="text-xs text-muted-foreground">Price</p>
-              <p className="text-xl font-semibold">{product.pricePoints} Point</p>
-            </div>
-          </div>
-
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-md border p-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Box className="size-4" />
-                Stock status
-              </div>
-              <p className="mt-2 text-xl font-semibold">{stockStatus.label}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{stockStatus.description}</p>
-            </div>
-            <div className="rounded-md border p-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Truck className="size-4" />
-                Delivery
-              </div>
-              <p className="mt-2 text-xl font-semibold">Automatic</p>
-              <p className="mt-1 text-xs text-muted-foreground">ID and password appear in purchase history after buying.</p>
-            </div>
-            <div className="rounded-md border p-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <History className="size-4" />
-                History
-              </div>
-              <p className="mt-2 text-xl font-semibold">Saved</p>
-              <p className="mt-1 text-xs text-muted-foreground">Purchased codes stay available in your account.</p>
-            </div>
-          </div>
-
-          <div className="mt-6 rounded-lg border p-4">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <main id="main-content" className="flex-1">
+        {/* ── Hero (parchment) ── */}
+        <section className="tile-parchment tile-section">
+          <div className="mx-auto max-w-4xl animate-fade-in-up">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h2 className="font-semibold">Purchase summary</h2>
-                <dl className="mt-3 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
-                  <div>
-                    <dt>Product</dt>
-                    <dd className="font-medium text-foreground">{product.name}</dd>
-                  </div>
-                  <div>
-                    <dt>Map</dt>
-                    <dd className="font-medium text-foreground">{product.gameMap}</dd>
-                  </div>
-                  <div>
-                    <dt>Price</dt>
-                    <dd className="font-medium text-foreground">{product.pricePoints} Point</dd>
-                  </div>
-                  <div>
-                    <dt>Your balance</dt>
-                    <dd className="font-medium text-foreground">{isLoggedIn ? `${userPoints} Point` : "Login required"}</dd>
-                  </div>
-                </dl>
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="text-caption text-[var(--muted-foreground)]">
+                    {product.gameMap}
+                  </p>
+                  <span className={stockStatus.badgeClass}>
+                    {stockStatus.label}
+                  </span>
+                </div>
+                <h1 className="text-hero-display mt-3">{product.name}</h1>
+                {product.description ? (
+                  <p className="text-body mt-4 max-w-2xl text-[var(--muted-foreground)]">
+                    {product.description}
+                  </p>
+                ) : null}
               </div>
-              <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
-                {isLoggedIn ? (
-                  <Button variant="outline" asChild>
-                    <Link href="/orders">
-                      <History className="size-4" />
-                      Purchase history
-                    </Link>
-                  </Button>
-                ) : null}
-                {isLoggedIn && !hasEnoughPoints ? (
-                  <Button variant="outline" asChild>
-                    <Link href="/topup">
-                      <Coins className="size-4" />
-                      Top up
-                    </Link>
-                  </Button>
-                ) : null}
+              <div className="utility-card shrink-0 text-center sm:text-right">
+                <p className="text-fine-print text-[var(--muted-foreground)]">
+                  Price
+                </p>
+                <p className="text-display-lg tabular-nums mt-1">
+                  {product.pricePoints}{" "}
+                  <span className="text-lead font-normal">Point</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Info cards (white) ── */}
+        <section className="tile-light tile-section">
+          <div className="mx-auto max-w-4xl">
+            <div className="grid gap-5 sm:grid-cols-3 animate-fade-in-up delay-1">
+              <div className="utility-card">
+                <p className="text-fine-print text-[var(--muted-foreground)]">
+                  Stock Status
+                </p>
+                <p className="text-tagline mt-2">{stockStatus.label}</p>
+                <p className="text-caption mt-1 text-[var(--muted-foreground)]">
+                  {stockStatus.description}
+                </p>
+              </div>
+              <div className="utility-card">
+                <p className="text-fine-print text-[var(--muted-foreground)]">
+                  Delivery
+                </p>
+                <p className="text-tagline mt-2">Automatic</p>
+                <p className="text-caption mt-1 text-[var(--muted-foreground)]">
+                  ID and password appear in purchase history after buying.
+                </p>
+              </div>
+              <div className="utility-card">
+                <p className="text-fine-print text-[var(--muted-foreground)]">
+                  History
+                </p>
+                <p className="text-tagline mt-2">Saved</p>
+                <p className="text-caption mt-1 text-[var(--muted-foreground)]">
+                  Purchased codes stay available in your account.
+                </p>
               </div>
             </div>
 
-            <div className="mt-5">
-            {session?.user?.id ? (
-              <form action={buyProductAction} className="space-y-3">
-                <input type="hidden" name="productId" value={product.id} />
-                <input type="hidden" name="slug" value={product.slug} />
-                {errorMessage ? (
-                  <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                    {errorMessage}
-                  </div>
-                ) : null}
-                {!hasEnoughPoints && isInStock ? (
-                  <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                    You need {product.pricePoints - userPoints} more Point to buy this product.
-                  </div>
-                ) : null}
-                <Button type="submit" disabled={!canBuy}>
-                  <ShoppingCart className="size-4" />
-                  {!isInStock ? "Out of stock" : hasEnoughPoints ? "Buy now" : "Not enough Point"}
-                </Button>
-              </form>
-            ) : (
-              <Button asChild>
-                <Link href="/login">
-                  <LockKeyhole className="size-4" />
-                  Login to buy
-                </Link>
-              </Button>
-            )}
+            {/* ── Purchase summary ── */}
+            <div className="utility-card mt-8 animate-fade-in-up delay-2">
+              <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <h2 className="text-body-strong">Purchase Summary</h2>
+                  <dl className="mt-4 grid gap-3 text-caption sm:grid-cols-2">
+                    <div>
+                      <dt className="text-[var(--muted-foreground)]">Product</dt>
+                      <dd className="font-medium mt-0.5">{product.name}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-[var(--muted-foreground)]">Map</dt>
+                      <dd className="font-medium mt-0.5">{product.gameMap}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-[var(--muted-foreground)]">Price</dt>
+                      <dd className="font-medium tabular-nums mt-0.5">
+                        {product.pricePoints} Point
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-[var(--muted-foreground)]">
+                        Your Balance
+                      </dt>
+                      <dd className="font-medium tabular-nums mt-0.5">
+                        {isLoggedIn ? `${userPoints} Point` : "Login required"}
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+                  {isLoggedIn ? (
+                    <Link href="/orders" className="btn-pill-ghost text-caption px-4 py-2">
+                      Purchase History
+                    </Link>
+                  ) : null}
+                  {isLoggedIn && !hasEnoughPoints ? (
+                    <Link href="/topup" className="btn-pill-ghost text-caption px-4 py-2">
+                      Top Up
+                    </Link>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="mt-6" aria-live="polite">
+                {session?.user?.id ? (
+                  <form action={buyProductAction} className="space-y-3">
+                    <input type="hidden" name="productId" value={product.id} />
+                    <input type="hidden" name="slug" value={product.slug} />
+                    {errorMessage ? (
+                      <div className="alert-error">{errorMessage}</div>
+                    ) : null}
+                    {!hasEnoughPoints && isInStock ? (
+                      <div className="alert-warning">
+                        You need {product.pricePoints - userPoints} more Point
+                        to buy this product.
+                      </div>
+                    ) : null}
+                    <button type="submit" disabled={!canBuy} className="btn-pill disabled:opacity-50 disabled:cursor-not-allowed">
+                      {!isInStock
+                        ? "Out of Stock"
+                        : hasEnoughPoints
+                          ? "Buy Now"
+                          : "Not Enough Point"}
+                    </button>
+                  </form>
+                ) : (
+                  <Link href="/login" className="btn-pill inline-flex">
+                    Login to Buy
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </section>
-    </main>
+        </section>
+      </main>
+    </>
   );
 }

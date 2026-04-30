@@ -1,7 +1,4 @@
-import { Box } from "lucide-react";
 import Link from "next/link";
-
-import { Button } from "@/components/ui/button";
 
 type ProductCardProps = {
   product: {
@@ -19,7 +16,7 @@ function getStockDisplay(availableCodes: number) {
     return {
       label: "Out of stock",
       countText: "0 left",
-      className: "border-destructive/30 bg-destructive/10 text-destructive",
+      badgeClass: "badge-error",
     };
   }
 
@@ -27,14 +24,14 @@ function getStockDisplay(availableCodes: number) {
     return {
       label: "Low stock",
       countText: `Only ${availableCodes} left`,
-      className: "border-amber-200 bg-amber-50 text-amber-800",
+      badgeClass: "badge-warning",
     };
   }
 
   return {
     label: "In stock",
     countText: `${availableCodes} left`,
-    className: "border-emerald-200 bg-emerald-50 text-emerald-800",
+    badgeClass: "badge-success",
   };
 }
 
@@ -43,39 +40,47 @@ export function ProductCard({ product }: ProductCardProps) {
   const stock = getStockDisplay(product.availableCodes);
 
   return (
-    <article className="rounded-lg border bg-card p-5 text-card-foreground shadow-sm">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm text-muted-foreground">{product.gameMap}</p>
-          <h2 className="mt-2 text-xl font-semibold">{product.name}</h2>
-          <span className={`mt-3 inline-flex rounded-md border px-2 py-1 text-xs font-medium ${stock.className}`}>
-            {stock.label}
-          </span>
+    <article className="utility-card group animate-scale-in">
+      {/* Header: map + stock */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-caption text-[var(--muted-foreground)]">
+            {product.gameMap}
+          </p>
+          <h2 className="text-body-strong mt-1.5 truncate">{product.name}</h2>
         </div>
-        <div className="rounded-md bg-secondary px-3 py-2 text-right">
-          <p className="text-xs text-muted-foreground">Price</p>
-          <p className="font-semibold">{product.pricePoints} Point</p>
-        </div>
+        <span className={stock.badgeClass}>{stock.label}</span>
       </div>
 
+      {/* Description */}
       {product.description ? (
-        <p className="mt-4 line-clamp-3 text-sm leading-6 text-muted-foreground">{product.description}</p>
+        <p className="mt-3 text-caption leading-relaxed text-[var(--muted-foreground)] line-clamp-2">
+          {product.description}
+        </p>
       ) : null}
 
-      <div className="mt-5">
-        <div className="rounded-md border p-3">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Box className="size-4" />
-            Available
-          </div>
-          <p className="mt-2 text-2xl font-semibold">{stock.countText}</p>
-          <p className="mt-1 text-xs text-muted-foreground">Automatic delivery after purchase</p>
+      {/* Price + stock count */}
+      <div className="mt-5 flex items-end justify-between border-t border-[var(--hairline)] pt-4">
+        <div>
+          <p className="text-fine-print text-[var(--muted-foreground)]">Price</p>
+          <p className="text-tagline tabular-nums mt-0.5">{product.pricePoints} <span className="text-caption font-normal">Point</span></p>
+        </div>
+        <div className="text-right">
+          <p className="text-fine-print text-[var(--muted-foreground)]">Available</p>
+          <p className="text-body-strong tabular-nums mt-0.5">{stock.countText}</p>
         </div>
       </div>
 
-      <Button className="mt-5 w-full" variant={isInStock ? "default" : "outline"} asChild>
-        <Link href={`/products/${product.slug}`}>{isInStock ? "View product" : "View details"}</Link>
-      </Button>
+      {/* CTA */}
+      <Link
+        href={`/products/${product.slug}`}
+        className="mt-5 flex items-center justify-center gap-1.5 text-body text-[var(--primary)] transition-colors hover:text-[var(--primary-focus)]"
+      >
+        {isInStock ? "View Product" : "View Details"}
+        <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden="true" className="mt-px transition-transform group-hover:translate-x-0.5">
+          <path d="M1 1l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </Link>
     </article>
   );
 }

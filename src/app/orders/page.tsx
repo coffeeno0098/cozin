@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { AnnouncementBar } from "@/components/announcement-bar";
-import { Button } from "@/components/ui/button";
 import { db } from "@/db";
 import { gameCodes, gameMaps, orders, products } from "@/db/schema";
 
@@ -43,63 +42,95 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
     .orderBy(desc(orders.createdAt));
 
   return (
-    <main className="min-h-screen bg-background px-6 py-8 text-foreground">
-      <section className="mx-auto w-full max-w-4xl space-y-6">
-        <div className="flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">Cozin account</p>
-            <h1 className="text-2xl font-semibold">Purchase history</h1>
-          </div>
-          <Button variant="outline" asChild>
-            <Link href="/products">Browse products</Link>
-          </Button>
+    <>
+      {/* ── Nav ── */}
+      <div className="global-nav">
+        <Link href="/" className="text-nav-link font-semibold uppercase tracking-wide" translate="no">
+          Cozin
+        </Link>
+        <div className="flex items-center gap-4">
+          <Link href="/products" className="text-nav-link opacity-85 hover:opacity-100">Products</Link>
+          <Link href="/account" className="text-nav-link opacity-85 hover:opacity-100">Account</Link>
         </div>
-        <AnnouncementBar />
+      </div>
+      <AnnouncementBar />
 
-        {params?.success ? (
-          <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-            Purchase completed. Your code is available below.
+      <main id="main-content" className="flex-1">
+        {/* ── Header (parchment) ── */}
+        <section className="tile-parchment tile-section py-12">
+          <div className="mx-auto max-w-4xl animate-fade-in-up">
+            <p className="text-caption text-[var(--muted-foreground)]">
+              <span translate="no">Cozin</span> Account
+            </p>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <h1 className="text-display-lg">Purchase History</h1>
+              <Link href="/products" className="btn-pill-ghost text-caption px-4 py-2">
+                Browse Products
+              </Link>
+            </div>
           </div>
-        ) : null}
+        </section>
 
-        {orderRows.length === 0 ? (
-          <div className="rounded-lg border p-5">
-            <h2 className="font-semibold">No purchases yet</h2>
-            <p className="mt-2 text-sm text-muted-foreground">Purchased codes will appear here.</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {orderRows.map((order) => (
-              <article key={order.id} className="rounded-lg border p-5">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{order.gameMap}</p>
-                    <h2 className="mt-1 text-lg font-semibold">{order.productName}</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {order.createdAt.toLocaleString("th-TH")} / {order.status}
-                    </p>
-                  </div>
-                  <div className="rounded-md bg-secondary px-3 py-2 text-right">
-                    <p className="text-xs text-muted-foreground">Paid</p>
-                    <p className="font-semibold">{order.pricePoints} Point</p>
-                  </div>
+        {/* ── Orders ── */}
+        <section className="tile-light tile-section">
+          <div className="mx-auto max-w-4xl space-y-5">
+            <div aria-live="polite">
+              {params?.success ? (
+                <div className="alert-success animate-fade-in">
+                  Purchase completed. Your code is available below.
                 </div>
+              ) : null}
+            </div>
 
-                <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-md border px-3 py-2">
-                    <p className="text-xs text-muted-foreground">ID</p>
-                    <p className="mt-1 break-all font-medium">{order.gameAccountId}</p>
+            {orderRows.length === 0 ? (
+              <div className="utility-card animate-fade-in-up">
+                <h2 className="text-body-strong">No Purchases Yet</h2>
+                <p className="text-caption mt-2 text-[var(--muted-foreground)]">
+                  Purchased codes will appear here.
+                </p>
+              </div>
+            ) : (
+              orderRows.map((order, i) => (
+                <article
+                  key={order.id}
+                  className={`utility-card animate-fade-in-up ${i < 6 ? `delay-${i + 1}` : ""}`}
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-caption text-[var(--muted-foreground)]">
+                        {order.gameMap}
+                      </p>
+                      <h2 className="text-body-strong mt-1">{order.productName}</h2>
+                      <p
+                        className="text-fine-print mt-1 text-[var(--muted-foreground)]"
+                        suppressHydrationWarning
+                      >
+                        {order.createdAt.toLocaleString("th-TH")} · {order.status}
+                      </p>
+                    </div>
+                    <div className="shrink-0 rounded-xl bg-[var(--surface-parchment)] px-4 py-2.5 text-right">
+                      <p className="text-fine-print text-[var(--muted-foreground)]">Paid</p>
+                      <p className="text-body-strong tabular-nums">{order.pricePoints} Point</p>
+                    </div>
                   </div>
-                  <div className="rounded-md border px-3 py-2">
-                    <p className="text-xs text-muted-foreground">Password</p>
-                    <p className="mt-1 break-all font-medium">{order.gamePassword}</p>
+
+                  {/* Credentials */}
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-xl border border-[var(--hairline)] bg-[var(--surface-parchment)] px-4 py-3">
+                      <p className="text-fine-print text-[var(--muted-foreground)]">ID</p>
+                      <p className="text-body-strong mt-1 break-all">{order.gameAccountId}</p>
+                    </div>
+                    <div className="rounded-xl border border-[var(--hairline)] bg-[var(--surface-parchment)] px-4 py-3">
+                      <p className="text-fine-print text-[var(--muted-foreground)]">Password</p>
+                      <p className="text-body-strong mt-1 break-all">{order.gamePassword}</p>
+                    </div>
                   </div>
-                </div>
-              </article>
-            ))}
+                </article>
+              ))
+            )}
           </div>
-        )}
-      </section>
-    </main>
+        </section>
+      </main>
+    </>
   );
 }

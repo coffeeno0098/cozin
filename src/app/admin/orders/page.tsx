@@ -1,7 +1,6 @@
 import { desc, eq, sql } from "drizzle-orm";
 import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
 import { db } from "@/db";
 import { gameCodes, gameMaps, orders, products, users } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin";
@@ -32,57 +31,61 @@ export default async function AdminOrdersPage() {
     .limit(100);
 
   return (
-    <main className="min-h-screen bg-background px-6 py-8 text-foreground">
-      <section className="mx-auto w-full max-w-6xl space-y-6">
-        <div className="flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">Cozin admin</p>
-            <h1 className="text-2xl font-semibold">Orders</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Latest purchases and delivered code details.</p>
-          </div>
-          <Button variant="outline" asChild>
-            <Link href="/admin">Back to dashboard</Link>
-          </Button>
-        </div>
+    <>
+      <div className="global-nav">
+        <Link href="/admin" className="text-nav-link font-semibold uppercase tracking-wide" translate="no">Cozin Admin</Link>
+        <Link href="/admin" className="text-nav-link opacity-85 hover:opacity-100">← Dashboard</Link>
+      </div>
 
-        {orderRows.length === 0 ? (
-          <div className="rounded-lg border p-5">
-            <h2 className="font-semibold">No orders yet</h2>
-            <p className="mt-2 text-sm text-muted-foreground">Customer purchases will appear here.</p>
+      <main id="main-content" className="flex-1">
+        <section className="tile-parchment tile-section py-12">
+          <div className="mx-auto max-w-6xl animate-fade-in-up">
+            <p className="text-caption text-[var(--muted-foreground)]"><span translate="no">Cozin</span> Admin</p>
+            <h1 className="text-display-lg mt-1">Orders</h1>
+            <p className="text-body mt-1 text-[var(--muted-foreground)]">Latest purchases and delivered code details.</p>
           </div>
-        ) : (
-          <div className="space-y-4">
-            {orderRows.map((order) => (
-              <article key={order.id} className="rounded-lg border p-5">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{order.username}</p>
-                    <h2 className="mt-1 text-lg font-semibold">{order.productName}</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {order.gameMap} / {order.createdAt.toLocaleString("th-TH")} / {order.status}
-                    </p>
-                  </div>
-                  <div className="rounded-md bg-secondary px-3 py-2 text-right">
-                    <p className="text-xs text-muted-foreground">Paid</p>
-                    <p className="font-semibold">{order.pricePoints} Point</p>
-                  </div>
-                </div>
+        </section>
 
-                <div className="mt-5 grid gap-3 md:grid-cols-2">
-                  <div className="rounded-md border px-3 py-2">
-                    <p className="text-xs text-muted-foreground">Delivered ID</p>
-                    <p className="mt-1 break-all font-medium">{order.gameAccountId}</p>
+        <section className="tile-light tile-section">
+          <div className="mx-auto max-w-6xl space-y-5">
+            {orderRows.length === 0 ? (
+              <div className="utility-card animate-fade-in-up">
+                <h2 className="text-body-strong">No Orders Yet</h2>
+                <p className="text-caption mt-2 text-[var(--muted-foreground)]">Customer purchases will appear here.</p>
+              </div>
+            ) : (
+              orderRows.map((order, i) => (
+                <article key={order.id} className={`utility-card animate-fade-in-up ${i < 5 ? `delay-${i + 1}` : ""}`}>
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-caption text-[var(--muted-foreground)]">{order.username}</p>
+                      <h2 className="text-body-strong mt-1 truncate">{order.productName}</h2>
+                      <p className="text-fine-print mt-1 text-[var(--muted-foreground)]" suppressHydrationWarning>
+                        {order.gameMap} · {order.createdAt.toLocaleString("th-TH")} · {order.status}
+                      </p>
+                    </div>
+                    <div className="shrink-0 rounded-xl bg-[var(--surface-parchment)] px-4 py-2.5 text-right">
+                      <p className="text-fine-print text-[var(--muted-foreground)]">Paid</p>
+                      <p className="text-body-strong tabular-nums">{order.pricePoints} Point</p>
+                    </div>
                   </div>
-                  <div className="rounded-md border px-3 py-2">
-                    <p className="text-xs text-muted-foreground">Delivered password</p>
-                    <p className="mt-1 break-all font-medium">{order.gamePassword}</p>
+
+                  <div className="mt-5 grid gap-3 md:grid-cols-2">
+                    <div className="rounded-xl border border-[var(--hairline)] bg-[var(--surface-parchment)] px-4 py-3">
+                      <p className="text-fine-print text-[var(--muted-foreground)]">Delivered ID</p>
+                      <p className="text-caption-strong mt-1 break-all">{order.gameAccountId}</p>
+                    </div>
+                    <div className="rounded-xl border border-[var(--hairline)] bg-[var(--surface-parchment)] px-4 py-3">
+                      <p className="text-fine-print text-[var(--muted-foreground)]">Delivered Password</p>
+                      <p className="text-caption-strong mt-1 break-all">{order.gamePassword}</p>
+                    </div>
                   </div>
-                </div>
-              </article>
-            ))}
+                </article>
+              ))
+            )}
           </div>
-        )}
-      </section>
-    </main>
+        </section>
+      </main>
+    </>
   );
 }

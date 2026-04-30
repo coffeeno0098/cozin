@@ -2,7 +2,6 @@ import { asc, count, eq, sql } from "drizzle-orm";
 import Link from "next/link";
 
 import { createProductAction, deleteMapAction, toggleProductAction } from "@/app/admin/actions";
-import { Button } from "@/components/ui/button";
 import { db } from "@/db";
 import { gameCodes, gameMaps, products } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin";
@@ -19,24 +18,9 @@ type ProductsPageProps = {
 export const dynamic = "force-dynamic";
 
 function getStockBadge(availableCodes: number) {
-  if (availableCodes === 0) {
-    return {
-      label: "Out of stock",
-      className: "border-destructive/30 bg-destructive/10 text-destructive",
-    };
-  }
-
-  if (availableCodes <= 2) {
-    return {
-      label: "Low stock",
-      className: "border-amber-200 bg-amber-50 text-amber-800",
-    };
-  }
-
-  return {
-    label: "In stock",
-    className: "border-emerald-200 bg-emerald-50 text-emerald-800",
-  };
+  if (availableCodes === 0) return { label: "Out of stock", badgeClass: "badge-error" };
+  if (availableCodes <= 2) return { label: "Low stock", badgeClass: "badge-warning" };
+  return { label: "In stock", badgeClass: "badge-success" };
 }
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
@@ -75,182 +59,159 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     .orderBy(asc(gameMaps.name));
 
   return (
-    <main className="min-h-screen bg-background px-6 py-8 text-foreground">
-      <section className="mx-auto w-full max-w-6xl space-y-8">
-        <div className="flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">Cozin admin</p>
-            <h1 className="text-2xl font-semibold">Products</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Create products and control product visibility.</p>
-          </div>
-          <Button variant="outline" asChild>
-            <Link href="/admin">Back to dashboard</Link>
-          </Button>
-        </div>
+    <>
+      <div className="global-nav">
+        <Link href="/admin" className="text-nav-link font-semibold uppercase tracking-wide" translate="no">Cozin Admin</Link>
+        <Link href="/admin" className="text-nav-link opacity-85 hover:opacity-100">← Dashboard</Link>
+      </div>
 
-        {params?.created ? (
-          <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-            Product created.
+      <main id="main-content" className="flex-1">
+        <section className="tile-parchment tile-section py-12">
+          <div className="mx-auto max-w-6xl animate-fade-in-up">
+            <p className="text-caption text-[var(--muted-foreground)]"><span translate="no">Cozin</span> Admin</p>
+            <h1 className="text-display-lg mt-1">Products</h1>
+            <p className="text-body mt-1 text-[var(--muted-foreground)]">Create products and control product visibility.</p>
           </div>
-        ) : null}
-        {params?.updated ? (
-          <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-            Product updated.
-          </div>
-        ) : null}
-        {params?.mapDeleted ? (
-          <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-            Map deleted.
-          </div>
-        ) : null}
-        {params?.error ? (
-          <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            {params.error === "map-in-use"
-              ? "This map is still used by products."
-              : params.error === "map"
-                ? "Please select or create a map."
-                : "Please check the product form."}
-          </div>
-        ) : null}
+        </section>
 
-        <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-          <form action={createProductAction} className="space-y-4 rounded-lg border p-5">
-            <div>
-              <h2 className="font-semibold">Add product</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Example: Captain, Blox Fruit, 10 Point.</p>
+        <section className="tile-light tile-section">
+          <div className="mx-auto max-w-6xl">
+            <div aria-live="polite" className="space-y-3 mb-8">
+              {params?.created ? <div className="alert-success">Product created.</div> : null}
+              {params?.updated ? <div className="alert-success">Product updated.</div> : null}
+              {params?.mapDeleted ? <div className="alert-success">Map deleted.</div> : null}
+              {params?.error ? (
+                <div className="alert-error">
+                  {params.error === "map-in-use" ? "This map is still used by products."
+                    : params.error === "map" ? "Please select or create a map."
+                    : "Please check the product form."}
+                </div>
+              ) : null}
             </div>
-            <label className="block space-y-2">
-              <span className="text-sm font-medium">Product name</span>
-              <input name="name" required className="h-10 w-full rounded-md border bg-background px-3 text-sm" />
-            </label>
-            <label className="block space-y-2">
-              <span className="text-sm font-medium">Existing map</span>
-              <select name="mapId" className="h-10 w-full rounded-md border bg-background px-3 text-sm">
-                <option value="">Create or choose map</option>
-                {mapRows.map((map) => (
-                  <option key={map.id} value={map.id}>
-                    {map.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block space-y-2">
-              <span className="text-sm font-medium">New map</span>
-              <input
-                name="newMapName"
-                placeholder="Blox Fruit"
-                className="h-10 w-full rounded-md border bg-background px-3 text-sm"
-              />
-              <span className="text-xs text-muted-foreground">
-                Leave this empty when choosing an existing map. A new name here will create a map automatically.
-              </span>
-            </label>
-            <label className="block space-y-2">
-              <span className="text-sm font-medium">Price Point</span>
-              <input
-                name="pricePoints"
-                type="number"
-                min={1}
-                required
-                className="h-10 w-full rounded-md border bg-background px-3 text-sm"
-              />
-            </label>
-            <label className="block space-y-2">
-              <span className="text-sm font-medium">Description</span>
-              <textarea name="description" className="min-h-24 w-full rounded-md border bg-background px-3 py-2 text-sm" />
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input name="isActive" type="checkbox" defaultChecked className="size-4" />
-              Active
-            </label>
-            <Button type="submit" className="w-full">
-              Add product
-            </Button>
-          </form>
 
-          <div className="space-y-3">
-            <div className="rounded-lg border p-5">
-              <h2 className="font-semibold">Maps</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Delete maps only when no product is using them.</p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {mapRows.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No maps yet.</p>
+            <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+              {/* ── Add product form ── */}
+              <form action={createProductAction} className="utility-card space-y-4 animate-fade-in-up">
+                <div>
+                  <h2 className="text-body-strong">Add Product</h2>
+                  <p className="text-caption mt-1 text-[var(--muted-foreground)]">Example: Captain, Blox Fruit, 10 Point.</p>
+                </div>
+                <label className="block space-y-2">
+                  <span className="text-caption-strong">Product Name</span>
+                  <input name="name" required spellCheck={false} className="input-apple" />
+                </label>
+                <label className="block space-y-2">
+                  <span className="text-caption-strong">Existing Map</span>
+                  <select name="mapId" className="input-apple">
+                    <option value="">Create or choose map</option>
+                    {mapRows.map((map) => (
+                      <option key={map.id} value={map.id}>{map.name}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block space-y-2">
+                  <span className="text-caption-strong">New Map</span>
+                  <input name="newMapName" placeholder="Blox Fruit" spellCheck={false} className="input-apple" />
+                  <span className="text-fine-print text-[var(--muted-foreground)]">
+                    Leave empty when choosing an existing map. A new name here creates a map automatically.
+                  </span>
+                </label>
+                <label className="block space-y-2">
+                  <span className="text-caption-strong">Price Point</span>
+                  <input name="pricePoints" type="number" min={1} required className="input-apple" />
+                </label>
+                <label className="block space-y-2">
+                  <span className="text-caption-strong">Description</span>
+                  <textarea name="description" className="textarea-apple" />
+                </label>
+                <label className="flex items-center gap-2 text-caption">
+                  <input name="isActive" type="checkbox" defaultChecked className="size-4 accent-[var(--primary)]" />
+                  Active
+                </label>
+                <button type="submit" className="btn-pill w-full">Add Product</button>
+              </form>
+
+              {/* ── Maps + Product list ── */}
+              <div className="space-y-5">
+                <div className="utility-card animate-fade-in-up delay-1">
+                  <h2 className="text-body-strong">Maps</h2>
+                  <p className="text-caption mt-1 text-[var(--muted-foreground)]">Delete maps only when no product is using them.</p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {mapRows.length === 0 ? (
+                      <p className="text-caption text-[var(--muted-foreground)]">No maps yet.</p>
+                    ) : (
+                      mapRows.map((map) => (
+                        <div key={map.id} className="flex items-center gap-2 rounded-full border border-[var(--hairline)] bg-[var(--surface-parchment)] px-3 py-1.5 text-caption">
+                          <span translate="no">{map.name}</span>
+                          <span className="text-[var(--muted-foreground)] tabular-nums">({map.productCount})</span>
+                          <form action={deleteMapAction}>
+                            <input type="hidden" name="mapId" value={map.id} />
+                            <button type="submit" disabled={map.productCount > 0} className="text-fine-print text-[var(--primary)] disabled:text-[var(--muted-foreground)] disabled:cursor-not-allowed hover:underline">
+                              Delete
+                            </button>
+                          </form>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {productRows.length === 0 ? (
+                  <div className="utility-card text-caption text-[var(--muted-foreground)]">No products yet.</div>
                 ) : (
-                  mapRows.map((map) => (
-                    <div key={map.id} className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
-                      <span>{map.name}</span>
-                      <span className="text-muted-foreground">({map.productCount})</span>
-                      <form action={deleteMapAction}>
-                        <input type="hidden" name="mapId" value={map.id} />
-                        <Button type="submit" size="xs" variant="ghost" disabled={map.productCount > 0}>
-                          Delete
-                        </Button>
-                      </form>
-                    </div>
-                  ))
+                  productRows.map((product, i) => {
+                    const stockBadge = getStockBadge(product.availableCodes);
+                    return (
+                      <div key={product.id} className={`utility-card animate-fade-in-up ${i < 5 ? `delay-${i + 2}` : ""}`}>
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h3 className="text-body-strong truncate">{product.name}</h3>
+                              <span className={product.isActive ? "badge-success" : "badge-neutral"}>
+                                {product.isActive ? "Active" : "Hidden"}
+                              </span>
+                              <span className={stockBadge.badgeClass}>{stockBadge.label}</span>
+                            </div>
+                            <p className="text-caption mt-1 text-[var(--muted-foreground)]">{product.gameMap}</p>
+                            {product.description ? (
+                              <p className="text-caption mt-2 text-[var(--muted-foreground)] line-clamp-2">{product.description}</p>
+                            ) : null}
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 sm:min-w-56">
+                            <div className="rounded-xl border border-[var(--hairline)] px-3 py-2 text-center">
+                              <p className="text-fine-print text-[var(--muted-foreground)]">Price</p>
+                              <p className="text-body-strong tabular-nums">{product.pricePoints}</p>
+                            </div>
+                            <div className="rounded-xl border border-[var(--hairline)] px-3 py-2 text-center">
+                              <p className="text-fine-print text-[var(--muted-foreground)]">Available</p>
+                              <p className="text-body-strong tabular-nums">{product.availableCodes}</p>
+                            </div>
+                            <div className="rounded-xl border border-[var(--hairline)] px-3 py-2 text-center">
+                              <p className="text-fine-print text-[var(--muted-foreground)]">Sold</p>
+                              <p className="text-body-strong tabular-nums">{product.soldCodes}</p>
+                            </div>
+                            <div className="rounded-xl border border-[var(--hairline)] px-3 py-2 text-center">
+                              <p className="text-fine-print text-[var(--muted-foreground)]">Rsv / Total</p>
+                              <p className="text-body-strong tabular-nums">{product.reservedCodes} / {product.totalCodes}</p>
+                            </div>
+                          </div>
+                        </div>
+                        <form action={toggleProductAction} className="mt-4">
+                          <input type="hidden" name="productId" value={product.id} />
+                          <input type="hidden" name="isActive" value={String(!product.isActive)} />
+                          <button type="submit" className="btn-pill-ghost text-caption px-4 py-2">
+                            {product.isActive ? "Hide Product" : "Show Product"}
+                          </button>
+                        </form>
+                      </div>
+                    );
+                  })
                 )}
               </div>
             </div>
-
-            {productRows.length === 0 ? (
-              <div className="rounded-lg border p-5 text-sm text-muted-foreground">No products yet.</div>
-            ) : (
-              productRows.map((product) => {
-                const stockBadge = getStockBadge(product.availableCodes);
-
-                return (
-                  <div key={product.id} className="rounded-lg border p-5">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-semibold">{product.name}</h3>
-                        <span className="rounded-md bg-secondary px-2 py-1 text-xs text-secondary-foreground">
-                          {product.isActive ? "Active" : "Hidden"}
-                        </span>
-                        <span className={`rounded-md border px-2 py-1 text-xs ${stockBadge.className}`}>
-                          {stockBadge.label}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-sm text-muted-foreground">{product.gameMap}</p>
-                      {product.description ? (
-                        <p className="mt-3 text-sm leading-6 text-muted-foreground">{product.description}</p>
-                      ) : null}
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-right sm:min-w-64">
-                      <div className="rounded-md border px-3 py-2">
-                        <p className="text-xs text-muted-foreground">Price</p>
-                        <p className="font-semibold">{product.pricePoints}</p>
-                      </div>
-                      <div className="rounded-md border px-3 py-2">
-                        <p className="text-xs text-muted-foreground">Available</p>
-                        <p className="font-semibold">{product.availableCodes}</p>
-                      </div>
-                      <div className="rounded-md border px-3 py-2">
-                        <p className="text-xs text-muted-foreground">Sold</p>
-                        <p className="font-semibold">{product.soldCodes}</p>
-                      </div>
-                      <div className="rounded-md border px-3 py-2">
-                        <p className="text-xs text-muted-foreground">Reserved / Total</p>
-                        <p className="font-semibold">
-                          {product.reservedCodes} / {product.totalCodes}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <form action={toggleProductAction} className="mt-4">
-                    <input type="hidden" name="productId" value={product.id} />
-                    <input type="hidden" name="isActive" value={String(!product.isActive)} />
-                    <Button type="submit" size="sm" variant="outline">
-                      {product.isActive ? "Hide product" : "Show product"}
-                    </Button>
-                  </form>
-                </div>
-                );
-              })
-            )}
           </div>
-        </div>
-      </section>
-    </main>
+        </section>
+      </main>
+    </>
   );
 }

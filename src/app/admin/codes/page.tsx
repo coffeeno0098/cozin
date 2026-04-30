@@ -2,7 +2,6 @@ import { asc, desc, eq, sql } from "drizzle-orm";
 import Link from "next/link";
 
 import { createCodeAction } from "@/app/admin/actions";
-import { Button } from "@/components/ui/button";
 import { db } from "@/db";
 import { gameCodes, gameMaps, products } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin";
@@ -16,22 +15,16 @@ type CodesPageProps = {
 
 export const dynamic = "force-dynamic";
 
-function getStatusClass(status: "available" | "reserved" | "sold") {
-  if (status === "available") return "border-emerald-200 bg-emerald-50 text-emerald-800";
-  if (status === "reserved") return "border-amber-200 bg-amber-50 text-amber-800";
-  return "border-border bg-secondary text-secondary-foreground";
+function getStatusBadge(status: "available" | "reserved" | "sold") {
+  if (status === "available") return "badge-success";
+  if (status === "reserved") return "badge-warning";
+  return "badge-neutral";
 }
 
-function getStockLabel(availableCodes: number) {
-  if (availableCodes === 0) return "Out of stock";
-  if (availableCodes <= 2) return "Low stock";
-  return "Ready";
-}
-
-function getStockClass(availableCodes: number) {
-  if (availableCodes === 0) return "border-destructive/30 bg-destructive/10 text-destructive";
-  if (availableCodes <= 2) return "border-amber-200 bg-amber-50 text-amber-800";
-  return "border-emerald-200 bg-emerald-50 text-emerald-800";
+function getStockBadge(availableCodes: number) {
+  if (availableCodes === 0) return { label: "Out of stock", badgeClass: "badge-error" };
+  if (availableCodes <= 2) return { label: "Low stock", badgeClass: "badge-warning" };
+  return { label: "Ready", badgeClass: "badge-success" };
 }
 
 export default async function CodesPage({ searchParams }: CodesPageProps) {
@@ -71,136 +64,123 @@ export default async function CodesPage({ searchParams }: CodesPageProps) {
     .limit(30);
 
   return (
-    <main className="min-h-screen bg-background px-6 py-8 text-foreground">
-      <section className="mx-auto w-full max-w-6xl space-y-8">
-        <div className="flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">Cozin admin</p>
-            <h1 className="text-2xl font-semibold">Game-code stock</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Add Roblox account ID and password stock.</p>
-          </div>
-          <Button variant="outline" asChild>
-            <Link href="/admin">Back to dashboard</Link>
-          </Button>
-        </div>
+    <>
+      <div className="global-nav">
+        <Link href="/admin" className="text-nav-link font-semibold uppercase tracking-wide" translate="no">Cozin Admin</Link>
+        <Link href="/admin" className="text-nav-link opacity-85 hover:opacity-100">← Dashboard</Link>
+      </div>
 
-        {params?.created ? (
-          <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-            Code added to stock.
+      <main id="main-content" className="flex-1">
+        <section className="tile-parchment tile-section py-12">
+          <div className="mx-auto max-w-6xl animate-fade-in-up">
+            <p className="text-caption text-[var(--muted-foreground)]"><span translate="no">Cozin</span> Admin</p>
+            <h1 className="text-display-lg mt-1">Game-Code Stock</h1>
+            <p className="text-body mt-1 text-[var(--muted-foreground)]">Add Roblox account ID and password stock.</p>
           </div>
-        ) : null}
-        {params?.error ? (
-          <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            Please check the code form.
-          </div>
-        ) : null}
+        </section>
 
-        <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
-          <form action={createCodeAction} className="space-y-4 rounded-lg border p-5">
-            <div>
-              <h2 className="font-semibold">Add code</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Choose a product, then add one ID/password pair.</p>
-            </div>
-            <label className="block space-y-2">
-              <span className="text-sm font-medium">Product</span>
-              <select name="productId" required className="h-10 w-full rounded-md border bg-background px-3 text-sm">
-                <option value="">Select product</option>
-                {productRows.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {product.name} - {product.gameMap} ({product.availableCodes} available)
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block space-y-2">
-              <span className="text-sm font-medium">Game ID</span>
-              <input name="gameAccountId" required className="h-10 w-full rounded-md border bg-background px-3 text-sm" />
-            </label>
-            <label className="block space-y-2">
-              <span className="text-sm font-medium">Game password</span>
-              <input name="gamePassword" required className="h-10 w-full rounded-md border bg-background px-3 text-sm" />
-            </label>
-            <Button type="submit" className="w-full" disabled={productRows.length === 0}>
-              Add code
-            </Button>
-            {productRows.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Create a product before adding code stock.</p>
-            ) : null}
-          </form>
-
-          <div className="space-y-3">
-            <div className="rounded-lg border p-5">
-              <h2 className="font-semibold">Product stock summary</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Use this to decide which products need more codes.</p>
-              {productRows.length === 0 ? (
-                <p className="mt-4 text-sm text-muted-foreground">Create a product before tracking stock.</p>
-              ) : (
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  {productRows.map((product) => (
-                    <div key={product.id} className="rounded-md border px-3 py-2">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <h3 className="text-sm font-medium">{product.name}</h3>
-                          <p className="mt-1 text-xs text-muted-foreground">{product.gameMap}</p>
-                        </div>
-                        <span className={`rounded-md border px-2 py-1 text-xs ${getStockClass(product.availableCodes)}`}>
-                          {getStockLabel(product.availableCodes)}
-                        </span>
-                      </div>
-                      <div className="mt-3 grid grid-cols-4 gap-2 text-center text-xs">
-                        <div>
-                          <p className="text-muted-foreground">Avail</p>
-                          <p className="mt-1 font-semibold">{product.availableCodes}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Sold</p>
-                          <p className="mt-1 font-semibold">{product.soldCodes}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Hold</p>
-                          <p className="mt-1 font-semibold">{product.reservedCodes}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Total</p>
-                          <p className="mt-1 font-semibold">{product.totalCodes}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+        <section className="tile-light tile-section">
+          <div className="mx-auto max-w-6xl">
+            <div aria-live="polite" className="space-y-3 mb-8">
+              {params?.created ? <div className="alert-success">Code added to stock.</div> : null}
+              {params?.error ? <div className="alert-error">Please check the code form.</div> : null}
             </div>
 
-            {codeRows.length === 0 ? (
-              <div className="rounded-lg border p-5 text-sm text-muted-foreground">No codes in stock yet.</div>
-            ) : (
-              codeRows.map((code) => (
-                <div key={code.id} className="rounded-lg border p-5">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <h3 className="font-semibold">{code.productName}</h3>
-                      <p className="text-sm text-muted-foreground">{code.gameMap}</p>
-                    </div>
-                    <span className={`w-fit rounded-md border px-2 py-1 text-xs ${getStatusClass(code.status)}`}>
-                      {code.status}
-                    </span>
-                  </div>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-md border px-3 py-2">
-                      <p className="text-xs text-muted-foreground">Game ID</p>
-                      <p className="mt-1 break-all text-sm font-medium">{code.gameAccountId}</p>
-                    </div>
-                    <div className="rounded-md border px-3 py-2">
-                      <p className="text-xs text-muted-foreground">Added</p>
-                      <p className="mt-1 text-sm font-medium">{code.createdAt.toLocaleString("th-TH")}</p>
-                    </div>
-                  </div>
+            <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
+              {/* ── Add code form ── */}
+              <form action={createCodeAction} className="utility-card space-y-4 animate-fade-in-up">
+                <div>
+                  <h2 className="text-body-strong">Add Code</h2>
+                  <p className="text-caption mt-1 text-[var(--muted-foreground)]">Choose a product, then add one ID/password pair.</p>
                 </div>
-              ))
-            )}
+                <label className="block space-y-2">
+                  <span className="text-caption-strong">Product</span>
+                  <select name="productId" required className="input-apple">
+                    <option value="">Select product</option>
+                    {productRows.map((product) => (
+                      <option key={product.id} value={product.id}>
+                        {product.name} — {product.gameMap} ({product.availableCodes} available)
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block space-y-2">
+                  <span className="text-caption-strong">Game ID</span>
+                  <input name="gameAccountId" required spellCheck={false} className="input-apple" />
+                </label>
+                <label className="block space-y-2">
+                  <span className="text-caption-strong">Game Password</span>
+                  <input name="gamePassword" required spellCheck={false} className="input-apple" />
+                </label>
+                <button type="submit" className="btn-pill w-full" disabled={productRows.length === 0}>Add Code</button>
+                {productRows.length === 0 ? (
+                  <p className="text-caption text-[var(--muted-foreground)]">Create a product before adding code stock.</p>
+                ) : null}
+              </form>
+
+              {/* ── Stock summary + codes ── */}
+              <div className="space-y-5">
+                <div className="utility-card animate-fade-in-up delay-1">
+                  <h2 className="text-body-strong">Product Stock Summary</h2>
+                  <p className="text-caption mt-1 text-[var(--muted-foreground)]">Use this to decide which products need more codes.</p>
+                  {productRows.length === 0 ? (
+                    <p className="text-caption mt-4 text-[var(--muted-foreground)]">Create a product before tracking stock.</p>
+                  ) : (
+                    <div className="mt-4 grid gap-3 md:grid-cols-2">
+                      {productRows.map((product) => {
+                        const stock = getStockBadge(product.availableCodes);
+                        return (
+                          <div key={product.id} className="rounded-xl border border-[var(--hairline)] px-4 py-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <h3 className="text-caption-strong truncate">{product.name}</h3>
+                                <p className="text-fine-print mt-0.5 text-[var(--muted-foreground)]">{product.gameMap}</p>
+                              </div>
+                              <span className={stock.badgeClass}>{stock.label}</span>
+                            </div>
+                            <div className="mt-3 grid grid-cols-4 gap-2 text-center">
+                              <div><p className="text-fine-print text-[var(--muted-foreground)]">Avail</p><p className="text-caption-strong tabular-nums mt-0.5">{product.availableCodes}</p></div>
+                              <div><p className="text-fine-print text-[var(--muted-foreground)]">Sold</p><p className="text-caption-strong tabular-nums mt-0.5">{product.soldCodes}</p></div>
+                              <div><p className="text-fine-print text-[var(--muted-foreground)]">Hold</p><p className="text-caption-strong tabular-nums mt-0.5">{product.reservedCodes}</p></div>
+                              <div><p className="text-fine-print text-[var(--muted-foreground)]">Total</p><p className="text-caption-strong tabular-nums mt-0.5">{product.totalCodes}</p></div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {codeRows.length === 0 ? (
+                  <div className="utility-card text-caption text-[var(--muted-foreground)]">No codes in stock yet.</div>
+                ) : (
+                  codeRows.map((code) => (
+                    <div key={code.id} className="utility-card">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0">
+                          <h3 className="text-body-strong truncate">{code.productName}</h3>
+                          <p className="text-caption text-[var(--muted-foreground)]">{code.gameMap}</p>
+                        </div>
+                        <span className={getStatusBadge(code.status)}>{code.status}</span>
+                      </div>
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                        <div className="rounded-xl border border-[var(--hairline)] bg-[var(--surface-parchment)] px-4 py-2.5">
+                          <p className="text-fine-print text-[var(--muted-foreground)]">Game ID</p>
+                          <p className="text-caption-strong mt-0.5 break-all">{code.gameAccountId}</p>
+                        </div>
+                        <div className="rounded-xl border border-[var(--hairline)] bg-[var(--surface-parchment)] px-4 py-2.5">
+                          <p className="text-fine-print text-[var(--muted-foreground)]">Added</p>
+                          <p className="text-caption-strong mt-0.5" suppressHydrationWarning>{code.createdAt.toLocaleString("th-TH")}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
-    </main>
+        </section>
+      </main>
+    </>
   );
 }

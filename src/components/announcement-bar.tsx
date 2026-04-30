@@ -18,8 +18,8 @@ export async function AnnouncementBar() {
   }
 
   return (
-    <div className="overflow-hidden rounded-md border bg-secondary text-secondary-foreground">
-      <div className="cozin-marquee py-2 text-sm font-medium whitespace-nowrap">
+    <div className="tile-parchment overflow-hidden border-b border-[var(--hairline)]">
+      <div className="cozin-marquee py-2.5 text-caption whitespace-nowrap">
         <span className="px-4">{announcement.message}</span>
       </div>
     </div>

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { ProductCard } from "@/components/product-card";
 import { SiteNav } from "@/components/site-nav";
 import { getPublicProducts } from "@/lib/products";
@@ -8,33 +10,52 @@ export default async function ProductsPage() {
   const productRows = await getPublicProducts();
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <section className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-8 sm:px-8 lg:px-10">
-        <SiteNav />
+    <>
+      <SiteNav />
 
-        <div className="flex flex-col gap-3">
-          <p className="text-sm text-muted-foreground">Products</p>
-          <h1 className="text-3xl font-semibold tracking-normal">Roblox codes ready to buy with Point</h1>
-          <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-            Browse available products before logging in. You will need an account before buying any code.
-          </p>
-        </div>
+      <main id="main-content" className="flex-1">
+        {/* ── Header (parchment sub-nav) ── */}
+        <section className="sub-nav">
+          <h1 className="text-tagline" translate="no">Products</h1>
+          <Link
+            href="/"
+            className="text-button-utility text-[var(--primary)] hover:underline underline-offset-4"
+          >
+            Home
+          </Link>
+        </section>
 
-        {productRows.length === 0 ? (
-          <div className="rounded-lg border p-6">
-            <h2 className="font-semibold">No active products yet</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Products added by the admin will appear here when they are active.
-            </p>
+        {/* ── Product grid ── */}
+        <section className="tile-light tile-section">
+          <div className="mx-auto max-w-6xl">
+            <div className="animate-fade-in-up">
+              <h2 className="text-display-lg">
+                <span translate="no">Roblox</span> Codes Ready to Buy with Point
+              </h2>
+              <p className="text-body mt-3 max-w-2xl text-[var(--muted-foreground)]">
+                Browse available products before logging in. You will need an
+                account before buying any code.
+              </p>
+            </div>
+
+            {productRows.length === 0 ? (
+              <div className="utility-card mt-8 animate-fade-in-up delay-1">
+                <h3 className="text-body-strong">No Active Products Yet</h3>
+                <p className="text-caption mt-2 text-[var(--muted-foreground)]">
+                  Products added by the admin will appear here when they are
+                  active.
+                </p>
+              </div>
+            ) : (
+              <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                {productRows.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {productRows.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        )}
-      </section>
-    </main>
+        </section>
+      </main>
+    </>
   );
 }

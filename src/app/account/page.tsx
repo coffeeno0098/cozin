@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { logoutAction } from "@/app/(auth)/actions";
 import { auth } from "@/auth";
 import { AnnouncementBar } from "@/components/announcement-bar";
-import { Button } from "@/components/ui/button";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 
@@ -34,71 +33,115 @@ export default async function AccountPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background px-6 py-8 text-foreground">
-      <section className="mx-auto w-full max-w-3xl space-y-6">
-        <div className="flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">Cozin account</p>
-            <h1 className="text-2xl font-semibold">{user.username}</h1>
+    <>
+      {/* ── Nav ── */}
+      <div className="global-nav">
+        <Link href="/" className="text-nav-link font-semibold uppercase tracking-wide" translate="no">
+          Cozin
+        </Link>
+        <div className="flex items-center gap-4">
+          <Link href="/products" className="text-nav-link opacity-85 hover:opacity-100">Products</Link>
+          <Link href="/topup" className="text-nav-link opacity-85 hover:opacity-100">Top Up</Link>
+          <Link href="/orders" className="text-nav-link opacity-85 hover:opacity-100">History</Link>
+          {user.role === "admin" ? (
+            <Link href="/admin" className="text-nav-link rounded-full bg-white/10 px-3 py-1.5 opacity-100 hover:bg-white/20">
+              Admin
+            </Link>
+          ) : null}
+        </div>
+      </div>
+      <AnnouncementBar />
+
+      <main id="main-content" className="flex-1">
+        {/* ── Header (parchment) ── */}
+        <section className="tile-parchment tile-section py-12">
+          <div className="mx-auto max-w-4xl animate-fade-in-up">
+            <p className="text-caption text-[var(--muted-foreground)]">
+              <span translate="no">Cozin</span> Account
+            </p>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <h1 className="text-hero-display">{user.username}</h1>
+              <form action={logoutAction}>
+                <button type="submit" className="btn-pill-ghost text-caption px-4 py-2">
+                  Logout
+                </button>
+              </form>
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="ghost" asChild>
-              <Link href="/products">Products</Link>
-            </Button>
-            <Button variant="ghost" asChild>
-              <Link href="/topup">Top up</Link>
-            </Button>
-            <Button variant="ghost" asChild>
-              <Link href="/orders">Purchase history</Link>
-            </Button>
+        </section>
+
+        {/* ── Stats (white) ── */}
+        <section className="tile-light tile-section">
+          <div className="mx-auto max-w-4xl">
+            <div className="grid gap-5 sm:grid-cols-3 animate-fade-in-up delay-1">
+              <div className="utility-card text-center">
+                <p className="text-fine-print text-[var(--muted-foreground)]">Point</p>
+                <p className="text-hero-display tabular-nums mt-3">{user.points}</p>
+              </div>
+              <div className="utility-card text-center">
+                <p className="text-fine-print text-[var(--muted-foreground)]">Email</p>
+                <p className="text-body-strong mt-3 break-all">{user.email ?? "Not set"}</p>
+              </div>
+              <div className="utility-card text-center">
+                <p className="text-fine-print text-[var(--muted-foreground)]">Role</p>
+                <p className="text-body-strong mt-3 capitalize">{user.role}</p>
+              </div>
+            </div>
+
+            {/* ── Quick actions ── */}
+            <div className="mt-8 grid gap-5 sm:grid-cols-2 animate-fade-in-up delay-2">
+              <Link href="/topup" className="utility-card group block">
+                <h2 className="text-body-strong">Top Up Point</h2>
+                <p className="text-caption mt-2 text-[var(--muted-foreground)]">
+                  Submit a <span translate="no">TrueMoney</span> gift link to add Point.
+                </p>
+                <span className="text-caption mt-4 inline-flex items-center gap-1 text-[var(--primary)] transition-colors group-hover:text-[var(--primary-focus)]">
+                  Go to Top Up
+                  <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden="true" className="transition-transform group-hover:translate-x-0.5">
+                    <path d="M1 1l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+              </Link>
+              <Link href="/orders" className="utility-card group block">
+                <h2 className="text-body-strong">Purchase History</h2>
+                <p className="text-caption mt-2 text-[var(--muted-foreground)]">
+                  View your purchased codes and delivery details.
+                </p>
+                <span className="text-caption mt-4 inline-flex items-center gap-1 text-[var(--primary)] transition-colors group-hover:text-[var(--primary-focus)]">
+                  View History
+                  <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden="true" className="transition-transform group-hover:translate-x-0.5">
+                    <path d="M1 1l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+              </Link>
+            </div>
+
+            {/* ── Admin shortcuts ── */}
             {user.role === "admin" ? (
-              <Button asChild>
-                <Link href="/admin">Admin dashboard</Link>
-              </Button>
+              <div className="mt-8 grid gap-5 sm:grid-cols-2 animate-fade-in-up delay-3">
+                <Link href="/admin/products" className="utility-card group block">
+                  <h2 className="text-body-strong">Manage Products</h2>
+                  <p className="text-caption mt-2 text-[var(--muted-foreground)]">
+                    Add products, set prices, and control visibility.
+                  </p>
+                  <span className="text-caption mt-4 inline-flex items-center gap-1 text-[var(--primary)]">
+                    Products →
+                  </span>
+                </Link>
+                <Link href="/admin/codes" className="utility-card group block">
+                  <h2 className="text-body-strong">Manage Game Codes</h2>
+                  <p className="text-caption mt-2 text-[var(--muted-foreground)]">
+                    Add ID and password stock for products.
+                  </p>
+                  <span className="text-caption mt-4 inline-flex items-center gap-1 text-[var(--primary)]">
+                    Codes →
+                  </span>
+                </Link>
+              </div>
             ) : null}
-            <form action={logoutAction}>
-              <Button type="submit" variant="outline">
-                Logout
-              </Button>
-            </form>
           </div>
-        </div>
-        <AnnouncementBar />
-
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-lg border p-5">
-            <p className="text-sm text-muted-foreground">Point</p>
-            <p className="mt-2 text-3xl font-semibold">{user.points}</p>
-          </div>
-          <div className="rounded-lg border p-5">
-            <p className="text-sm text-muted-foreground">Email</p>
-            <p className="mt-2 break-all text-sm font-medium">{user.email ?? "Not set"}</p>
-          </div>
-          <div className="rounded-lg border p-5">
-            <p className="text-sm text-muted-foreground">Role</p>
-            <p className="mt-2 text-sm font-medium">{user.role}</p>
-          </div>
-        </div>
-
-        {user.role === "admin" ? (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-lg border p-5">
-              <h2 className="font-semibold">Products</h2>
-              <p className="mt-2 text-sm text-muted-foreground">Add products, set prices, and control visibility.</p>
-              <Button className="mt-4" asChild>
-                <Link href="/admin/products">Manage products</Link>
-              </Button>
-            </div>
-            <div className="rounded-lg border p-5">
-              <h2 className="font-semibold">Game codes</h2>
-              <p className="mt-2 text-sm text-muted-foreground">Add ID and password stock for products.</p>
-              <Button className="mt-4" variant="outline" asChild>
-                <Link href="/admin/codes">Manage codes</Link>
-              </Button>
-            </div>
-          </div>
-        ) : null}
-      </section>
-    </main>
+        </section>
+      </main>
+    </>
   );
 }

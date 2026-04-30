@@ -1,113 +1,180 @@
-import { Coins, History, LockKeyhole, ShieldCheck } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
+import { auth } from "@/auth";
 import { ProductCard } from "@/components/product-card";
 import { SiteNav } from "@/components/site-nav";
-import { Button } from "@/components/ui/button";
 import { getPublicProducts } from "@/lib/products";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const featuredProducts = await getPublicProducts(3);
+  const [featuredProducts, session] = await Promise.all([
+    getPublicProducts(3),
+    auth(),
+  ]);
+  const topupHref = session?.user?.id ? "/topup" : "/login";
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <section className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-8 sm:px-8 lg:px-10">
-        <SiteNav />
+    <>
+      <SiteNav />
 
-        <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
-          <div className="space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-md border px-3 py-1 text-sm text-muted-foreground">
-              <ShieldCheck className="size-4" />
-              Owner-run Roblox code shop with automatic delivery after purchase.
+      <main id="main-content" className="flex-1">
+        {/* ── Hero Tile (dark) ── */}
+        <section className="tile-dark tile-section">
+          <div className="mx-auto flex max-w-5xl flex-col items-center text-center">
+            <Image
+              src="/logo.png"
+              alt=""
+              width={72}
+              height={72}
+              className="animate-fade-in rounded-xl"
+              priority
+            />
+            <h1 className="text-hero-display mt-8 max-w-3xl animate-fade-in-up text-white">
+              Buy Roblox codes for{" "}
+              <span translate="no">Blox Fruit</span> and popular maps
+            </h1>
+            <p className="text-lead mt-5 max-w-xl animate-fade-in-up delay-1 text-[var(--text-muted-dark)]">
+              Browse products before logging in. Add Point with{" "}
+              <span translate="no">TrueMoney</span>, then buy game codes
+              instantly.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-4 animate-fade-in-up delay-2">
+              <Link href={topupHref} className="btn-pill-on-dark">
+                Add Point
+              </Link>
+              <Link href="/products" className="btn-pill-ghost border-white/30 text-white hover:bg-white/10">
+                View Products
+              </Link>
             </div>
-            <div className="space-y-4">
-              <h1 className="max-w-3xl text-4xl font-semibold tracking-normal sm:text-5xl">
-                Buy Roblox codes for Blox Fruit and popular maps
-              </h1>
-              <p className="max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
-                Browse products before logging in. Add Point with TrueMoney later, then use Point to buy game codes
-                instantly from your purchase history.
+          </div>
+        </section>
+
+        {/* ── Example Product Showcase (parchment) ── */}
+        <section className="tile-parchment tile-section">
+          <div className="mx-auto max-w-4xl">
+            <div className="text-center animate-fade-in-up">
+              <p className="text-caption text-[var(--muted-foreground)]">
+                Example product
+              </p>
+              <h2 className="text-display-lg mt-2">
+                <span translate="no">Captain</span>
+              </h2>
+              <p className="text-body mt-2 text-[var(--muted-foreground)]">
+                Map <span translate="no">Blox Fruit</span>
               </p>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Button size="lg" asChild>
-                <Link href="/login">
-                  <Coins className="size-4" />
-                  Add Point
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link href="/products">View products</Link>
-              </Button>
-            </div>
-          </div>
-
-          <div className="rounded-lg border bg-card p-5 text-card-foreground shadow-sm">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Example product</p>
-                <h2 className="mt-2 text-2xl font-semibold">Captain</h2>
-                <p className="mt-1 text-sm text-muted-foreground">Map Blox Fruit</p>
+            <div className="mx-auto mt-8 grid max-w-lg gap-4 sm:grid-cols-2 animate-fade-in-up delay-1">
+              <div className="utility-card text-center">
+                <p className="text-fine-print text-[var(--muted-foreground)]">
+                  Price
+                </p>
+                <p className="text-display-lg tabular-nums mt-2">
+                  10{" "}
+                  <span className="text-lead font-normal">Point</span>
+                </p>
               </div>
-              <div className="rounded-md bg-secondary px-3 py-2 text-right">
-                <p className="text-xs text-muted-foreground">Price</p>
-                <p className="text-lg font-semibold">10 Point</p>
-              </div>
-            </div>
-            <div className="mt-6">
-              <div className="rounded-md border p-4">
-                <p className="text-sm text-muted-foreground">Stock</p>
-                <p className="mt-2 text-2xl font-semibold">10</p>
+              <div className="utility-card text-center">
+                <p className="text-fine-print text-[var(--muted-foreground)]">
+                  Stock
+                </p>
+                <p className="text-display-lg tabular-nums mt-2">
+                  10
+                </p>
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
+        {/* ── Featured Products (white) ── */}
         {featuredProducts.length > 0 ? (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Available now</p>
-                <h2 className="text-2xl font-semibold">Featured products</h2>
+          <section className="tile-light tile-section">
+            <div className="mx-auto max-w-6xl">
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-caption text-[var(--muted-foreground)]">
+                    Available now
+                  </p>
+                  <h2 className="text-display-lg mt-1">Featured Products</h2>
+                </div>
+                <Link
+                  href="/products"
+                  className="btn-pill-ghost text-caption px-4 py-2"
+                >
+                  All Products
+                </Link>
               </div>
-              <Button variant="outline" asChild>
-                <Link href="/products">All products</Link>
-              </Button>
+              <div className="mt-8 grid gap-5 md:grid-cols-3">
+                {featuredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
             </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          </div>
+          </section>
         ) : null}
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-lg border p-5">
-            <Coins className="size-5" />
-            <h3 className="mt-4 font-semibold">TrueMoney to Point</h3>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Customers will submit a TrueMoney gift link to add Point automatically.
-            </p>
+        {/* ── Features Tile (dark) ── */}
+        <section className="tile-dark-2 tile-section">
+          <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-3">
+            <div className="animate-fade-in-up">
+              <div className="flex size-12 items-center justify-center rounded-2xl bg-white/10">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10" stroke="var(--primary-on-dark)" strokeWidth="1.5" />
+                  <path d="M12 6v6l4 2" stroke="var(--primary-on-dark)" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </div>
+              <h3 className="text-tagline mt-5 text-white">
+                <span translate="no">TrueMoney</span> to Point
+              </h3>
+              <p className="text-body mt-3 text-[var(--text-muted-dark)]">
+                Submit a <span translate="no">TrueMoney</span> gift link to add
+                Point automatically. 1 Baht = 1 Point.
+              </p>
+            </div>
+            <div className="animate-fade-in-up delay-1">
+              <div className="flex size-12 items-center justify-center rounded-2xl bg-white/10">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <rect x="3" y="6" width="18" height="12" rx="2" stroke="var(--primary-on-dark)" strokeWidth="1.5" />
+                  <path d="M3 10h18" stroke="var(--primary-on-dark)" strokeWidth="1.5" />
+                  <circle cx="7" cy="14" r="1" fill="var(--primary-on-dark)" />
+                </svg>
+              </div>
+              <h3 className="text-tagline mt-5 text-white">
+                Automatic Code Delivery
+              </h3>
+              <p className="text-body mt-3 text-[var(--text-muted-dark)]">
+                After purchase, the game code credentials appear instantly in
+                your purchase history.
+              </p>
+            </div>
+            <div className="animate-fade-in-up delay-2">
+              <div className="flex size-12 items-center justify-center rounded-2xl bg-white/10">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="var(--primary-on-dark)" strokeWidth="1.5" />
+                  <path d="M9 12l2 2 4-4" stroke="var(--primary-on-dark)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <h3 className="text-tagline mt-5 text-white">
+                Clear History
+              </h3>
+              <p className="text-body mt-3 text-[var(--text-muted-dark)]">
+                Point top-ups, purchases, and balance changes are stored as a
+                ledger for reliable support.
+              </p>
+            </div>
           </div>
-          <div className="rounded-lg border p-5">
-            <LockKeyhole className="size-5" />
-            <h3 className="mt-4 font-semibold">Automatic code delivery</h3>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              After purchase, the selected code is attached to the order and shown in purchase history.
-            </p>
-          </div>
-          <div className="rounded-lg border p-5">
-            <History className="size-5" />
-            <h3 className="mt-4 font-semibold">Clear history</h3>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Point top-ups, purchases, and balance changes are stored as a ledger for reliable support.
-            </p>
-          </div>
-        </div>
-      </section>
-    </main>
+        </section>
+
+        {/* ── Footer (parchment) ── */}
+        <footer className="tile-parchment py-10 text-center">
+          <p className="text-fine-print text-[var(--muted-foreground)]">
+            © {new Date().getFullYear()}{" "}
+            <span translate="no">Cozin</span>. Owner-run{" "}
+            <span translate="no">Roblox</span> code shop.
+          </p>
+        </footer>
+      </main>
+    </>
   );
 }
