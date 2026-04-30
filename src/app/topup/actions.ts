@@ -7,9 +7,10 @@ import { z } from "zod";
 
 import { auth } from "@/auth";
 import { db } from "@/db";
-import { payments, pointTransactions, users } from "@/db/schema";
+import { payments } from "@/db/schema";
 import { env } from "@/lib/env";
 import { buildRateLimitKey, checkRateLimit, rateLimitWindows } from "@/lib/rate-limit";
+import { applyVerifiedTopup } from "@/lib/topup";
 import { decideExistingTopupPayment } from "@/lib/topup-safety";
 import { extractTrueMoneyVoucherCode, redeemTrueMoneyVoucher } from "@/lib/truemoney";
 
@@ -131,54 +132,9 @@ export async function createTopupAction(formData: FormData) {
     redirect(`/topup?error=redeem&reason=${encodeURIComponent(redeemResult.message)}`);
   }
 
-  await db.transaction(async (tx) => {
-    const [user] = await tx
-      .select({
-        id: users.id,
-        points: users.points,
-      })
-      .from(users)
-      .where(eq(users.id, session.user.id))
-      .for("update")
-      .limit(1);
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    const pointsGranted = redeemResult.amountBaht;
-    const balanceAfter = user.points + pointsGranted;
-
-    await tx
-      .update(users)
-      .set({
-        points: balanceAfter,
-        updatedAt: new Date(),
-      })
-      .where(eq(users.id, user.id));
-
-    await tx
-      .update(payments)
-      .set({
-        amountBaht: redeemResult.amountBaht,
-        pointsGranted,
-        status: "verified",
-        verifiedAt: new Date(),
-        rawResponse: {
-          statusCode: redeemResult.statusCode,
-          payload: redeemResult.payload,
-        },
-      })
-      .where(eq(payments.id, payment.id));
-
-    await tx.insert(pointTransactions).values({
-      userId: user.id,
-      type: "topup",
-      points: pointsGranted,
-      balanceAfter,
-      paymentId: payment.id,
-      note: "TrueMoney gift top-up",
-    });
+  await applyVerifiedTopup(session.user.id, payment.id, redeemResult.amountBaht, {
+    statusCode: redeemResult.statusCode,
+    payload: redeemResult.payload,
   });
 
   revalidatePath("/topup");
