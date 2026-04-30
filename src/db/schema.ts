@@ -1,5 +1,7 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   index,
   integer,
   jsonb,
@@ -39,6 +41,7 @@ export const users = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
+    check("users_points_non_negative", sql`${table.points} >= 0`),
     uniqueIndex("users_username_unique").on(table.username),
     uniqueIndex("users_email_unique").on(table.email),
   ],
@@ -245,6 +248,8 @@ export const pointTransactions = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
+    check("point_transactions_points_non_zero", sql`${table.points} <> 0`),
+    check("point_transactions_balance_after_non_negative", sql`${table.balanceAfter} >= 0`),
     index("point_transactions_user_idx").on(table.userId),
     index("point_transactions_payment_idx").on(table.paymentId),
     index("point_transactions_order_idx").on(table.orderId),

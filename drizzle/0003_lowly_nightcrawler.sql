@@ -1,0 +1,3 @@
+ALTER TABLE "point_transactions" ADD CONSTRAINT "point_transactions_points_non_zero" CHECK ("point_transactions"."points" <> 0);--> statement-breakpoint
+ALTER TABLE "point_transactions" ADD CONSTRAINT "point_transactions_balance_after_non_negative" CHECK ("point_transactions"."balance_after" >= 0);--> statement-breakpoint
+ALTER TABLE "users" ADD CONSTRAINT "users_points_non_negative" CHECK ("users"."points" >= 0);

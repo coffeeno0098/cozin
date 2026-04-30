@@ -76,6 +76,15 @@ export default async function AdminPage() {
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           <div className="rounded-lg border p-5">
+            <h2 className="font-semibold">Users</h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Review customer balances and apply audited manual Point adjustments.
+            </p>
+            <Button className="mt-5" variant="outline" asChild>
+              <Link href="/admin/users">Manage users</Link>
+            </Button>
+          </div>
+          <div className="rounded-lg border p-5">
             <h2 className="font-semibold">Products</h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               Add Roblox code products, set point prices, and toggle product visibility.

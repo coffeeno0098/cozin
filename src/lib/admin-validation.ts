@@ -31,6 +31,14 @@ export const codeFormSchema = z.object({
   gamePassword: z.string().trim().min(1).max(255),
 });
 
+export const pointAdjustmentFormSchema = z.object({
+  userId: z.string().uuid(),
+  pointsDelta: z.coerce.number().int().min(-1_000_000).max(1_000_000).refine((value) => value !== 0, {
+    message: "Adjustment amount cannot be zero.",
+  }),
+  reason: z.string().trim().min(3).max(500),
+});
+
 export function createSlug(input: string) {
   return input
     .trim()

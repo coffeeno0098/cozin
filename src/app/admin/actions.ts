@@ -5,10 +5,16 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { db } from "@/db";
-import { gameCodes, gameMaps, products } from "@/db/schema";
-import { writeAdminAuditLog } from "@/lib/admin-audit";
+import { adminAuditLogs, gameCodes, gameMaps, pointTransactions, products, users } from "@/db/schema";
+import { sanitizeAuditMetadata, writeAdminAuditLog } from "@/lib/admin-audit";
 import { requireAdmin } from "@/lib/admin";
-import { codeFormSchema, createSlug, deleteMapFormSchema, productFormSchema } from "@/lib/admin-validation";
+import {
+  codeFormSchema,
+  createSlug,
+  deleteMapFormSchema,
+  pointAdjustmentFormSchema,
+  productFormSchema,
+} from "@/lib/admin-validation";
 
 function readForm(formData: FormData) {
   return Object.fromEntries(formData.entries());
@@ -279,4 +285,84 @@ export async function createCodeAction(formData: FormData) {
   revalidatePath("/admin/codes");
   revalidatePath("/admin/products");
   redirect("/admin/codes?created=1");
+}
+
+export async function adjustUserPointsAction(formData: FormData) {
+  const currentUser = await requireAdmin();
+
+  const parsed = pointAdjustmentFormSchema.safeParse(readForm(formData));
+
+  if (!parsed.success) {
+    redirect("/admin/users?error=invalid");
+  }
+
+  const result = await db.transaction(async (tx) => {
+    const [targetUser] = await tx
+      .select({
+        id: users.id,
+        username: users.username,
+        points: users.points,
+      })
+      .from(users)
+      .where(eq(users.id, parsed.data.userId))
+      .for("update")
+      .limit(1);
+
+    if (!targetUser) {
+      return { ok: false as const, reason: "not-found" };
+    }
+
+    const balanceAfter = targetUser.points + parsed.data.pointsDelta;
+
+    if (balanceAfter < 0) {
+      return { ok: false as const, reason: "negative" };
+    }
+
+    await tx
+      .update(users)
+      .set({
+        points: balanceAfter,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, targetUser.id));
+
+    const [transaction] = await tx
+      .insert(pointTransactions)
+      .values({
+        userId: targetUser.id,
+        type: "adjustment",
+        points: parsed.data.pointsDelta,
+        balanceAfter,
+        note: parsed.data.reason,
+      })
+      .returning({
+        id: pointTransactions.id,
+      });
+
+    await tx.insert(adminAuditLogs).values({
+      adminUserId: currentUser.id,
+      action: "points.adjust",
+      targetType: "user",
+      targetId: targetUser.id,
+      metadata: sanitizeAuditMetadata({
+        username: targetUser.username,
+        pointsDelta: parsed.data.pointsDelta,
+        balanceBefore: targetUser.points,
+        balanceAfter,
+        reason: parsed.data.reason,
+        pointTransactionId: transaction.id,
+      }),
+    });
+
+    return { ok: true as const };
+  });
+
+  if (!result.ok) {
+    redirect(`/admin/users?error=${result.reason}`);
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/audit-logs");
+  revalidatePath("/admin/users");
+  redirect("/admin/users?adjusted=1");
 }
