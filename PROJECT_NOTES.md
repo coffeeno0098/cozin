@@ -45,6 +45,8 @@ Use this file as the project memory for future Codex chats. Add short notes here
 - `payments.externalReference` has a unique index to prevent voucher reuse.
 - Top-up success updates user points, payment status, and point transaction inside a transaction.
 - Existing top-up payment retry/duplicate decisions live in `src/lib/topup-safety.ts` and have regression tests in `src/lib/topup-safety.test.ts`.
+- Admin dashboard summary queries live in `src/lib/admin-dashboard.ts`.
+- Low-stock status uses `LOW_STOCK_THRESHOLD = 5` and is covered by `src/lib/admin-dashboard.test.ts`.
 - Admin server actions use `requireAdmin()`.
 - Admin changes write `adminAuditLogs`, with metadata sanitization for sensitive keys.
 - Tests currently cover auth validation, admin validation, admin audit sanitization, rate limit behavior, and TrueMoney helpers.
@@ -83,11 +85,12 @@ Goal: verify that money, stock, and admin permissions are hard to break before f
 Goal: make the shop owner faster and safer day-to-day.
 
 1. Dashboard summary
-   - Total sales, total top-ups, recent orders, recent payments, low-stock products.
+   - Done: `/admin` now shows sales, order count, verified top-ups, pending payments, active products, available stock, latest orders, latest payments, and low-stock products.
 
 2. Low-stock workflow
-   - Surface products with 0 stock or low stock.
-   - Add clearer admin affordance to add codes from product/admin dashboard.
+   - Done: dashboard surfaces active products with 5 or fewer available codes.
+   - Done: dashboard includes Add Stock / Manage Stock links to `/admin/codes`.
+   - Still useful later: add product-specific quick-add code flows or filters on `/admin/codes`.
 
 3. Export/backup
    - Export orders, payments, users, point transactions, and code stock as CSV.
@@ -136,3 +139,4 @@ Goal: reduce operational surprises once real money/users exist.
 
 - 2026-05-01: Added project memory file and backend hardening plan after storefront redesign review.
 - 2026-05-01: Started backend hardening by extracting purchase/top-up safety helpers and adding regression tests for money/stock/duplicate-voucher behavior.
+- 2026-05-01: Added admin dashboard summary helper, low-stock threshold tests, and upgraded `/admin` with operating metrics, latest orders/payments, and stock alerts.
