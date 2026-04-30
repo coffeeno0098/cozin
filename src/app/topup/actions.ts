@@ -10,7 +10,8 @@ import { db } from "@/db";
 import { payments, pointTransactions, users } from "@/db/schema";
 import { env } from "@/lib/env";
 import { buildRateLimitKey, checkRateLimit, rateLimitWindows } from "@/lib/rate-limit";
-import { extractTrueMoneyVoucherCode, isRetryableTrueMoneyFailure, redeemTrueMoneyVoucher } from "@/lib/truemoney";
+import { decideExistingTopupPayment } from "@/lib/topup-safety";
+import { extractTrueMoneyVoucherCode, redeemTrueMoneyVoucher } from "@/lib/truemoney";
 
 const topupSchema = z.object({
   voucherUrl: z
@@ -64,21 +65,13 @@ export async function createTopupAction(formData: FormData) {
     .where(eq(payments.externalReference, voucherCode))
     .limit(1);
 
-  if (existingPayment) {
-    if (existingPayment.status === "pending") {
-      redirect("/topup?error=processing");
-    }
+  const existingPaymentDecision = decideExistingTopupPayment(existingPayment, session.user.id);
 
-    if (existingPayment.status === "verified" || existingPayment.userId !== session.user.id) {
-      redirect("/topup?error=duplicate");
-    }
-
-    if (!isRetryableTrueMoneyFailure(existingPayment.rawResponse)) {
-      redirect("/topup?error=duplicate");
-    }
+  if (existingPaymentDecision.action === "reject") {
+    redirect(`/topup?error=${existingPaymentDecision.error}`);
   }
 
-  const payment = existingPayment
+  const payment = existingPaymentDecision.action === "retry" && existingPayment
     ? await db.transaction(async (tx) => {
         await tx
           .update(payments)
