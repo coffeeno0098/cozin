@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 
 import { buyProductAction } from "@/app/products/actions";
 import { auth } from "@/auth";
+import { AnnouncementBar } from "@/components/announcement-bar";
 import { Button } from "@/components/ui/button";
 import { db } from "@/db";
 import { gameCodes, gameMaps, products, users } from "@/db/schema";
@@ -108,6 +109,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
             Back to products
           </Link>
         </Button>
+        <AnnouncementBar />
 
         <div className="rounded-lg border bg-card p-6 text-card-foreground shadow-sm">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">

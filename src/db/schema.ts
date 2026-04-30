@@ -65,6 +65,22 @@ export const adminAuditLogs = pgTable(
   ],
 );
 
+export const siteAnnouncements = pgTable(
+  "site_announcements",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    message: text("message").notNull(),
+    isActive: boolean("is_active").default(true).notNull(),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("site_announcements_active_created_idx").on(table.isActive, table.createdAt),
+    index("site_announcements_created_by_user_idx").on(table.createdByUserId),
+  ],
+);
+
 export const accounts = pgTable(
   "accounts",
   {

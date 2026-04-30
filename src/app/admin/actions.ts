@@ -5,15 +5,17 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { db } from "@/db";
-import { adminAuditLogs, gameCodes, gameMaps, pointTransactions, products, users } from "@/db/schema";
+import { adminAuditLogs, gameCodes, gameMaps, pointTransactions, products, siteAnnouncements, users } from "@/db/schema";
 import { sanitizeAuditMetadata, writeAdminAuditLog } from "@/lib/admin-audit";
 import { requireAdmin } from "@/lib/admin";
 import {
   codeFormSchema,
+  announcementFormSchema,
   createSlug,
   deleteMapFormSchema,
   pointAdjustmentFormSchema,
   productFormSchema,
+  toggleAnnouncementFormSchema,
 } from "@/lib/admin-validation";
 
 function readForm(formData: FormData) {
@@ -365,4 +367,102 @@ export async function adjustUserPointsAction(formData: FormData) {
   revalidatePath("/admin/audit-logs");
   revalidatePath("/admin/users");
   redirect("/admin/users?adjusted=1");
+}
+
+export async function createAnnouncementAction(formData: FormData) {
+  const currentUser = await requireAdmin();
+
+  const parsed = announcementFormSchema.safeParse(readForm(formData));
+
+  if (!parsed.success) {
+    redirect("/admin/announcements?error=invalid");
+  }
+
+  const [announcement] = await db
+    .insert(siteAnnouncements)
+    .values({
+      message: parsed.data.message,
+      isActive: parsed.data.isActive,
+      createdByUserId: currentUser.id,
+    })
+    .returning({
+      id: siteAnnouncements.id,
+      message: siteAnnouncements.message,
+      isActive: siteAnnouncements.isActive,
+    });
+
+  await writeAdminAuditLog({
+    adminUserId: currentUser.id,
+    action: "announcement.create",
+    targetType: "site_announcement",
+    targetId: announcement.id,
+    metadata: {
+      message: announcement.message,
+      isActive: announcement.isActive,
+    },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/account");
+  revalidatePath("/admin");
+  revalidatePath("/admin/announcements");
+  revalidatePath("/admin/audit-logs");
+  revalidatePath("/orders");
+  revalidatePath("/products");
+  revalidatePath("/topup");
+  redirect("/admin/announcements?created=1");
+}
+
+export async function toggleAnnouncementAction(formData: FormData) {
+  const currentUser = await requireAdmin();
+
+  const parsed = toggleAnnouncementFormSchema.safeParse(readForm(formData));
+
+  if (!parsed.success) {
+    redirect("/admin/announcements?error=invalid");
+  }
+
+  const [announcement] = await db
+    .select({
+      id: siteAnnouncements.id,
+      message: siteAnnouncements.message,
+      isActive: siteAnnouncements.isActive,
+    })
+    .from(siteAnnouncements)
+    .where(eq(siteAnnouncements.id, parsed.data.announcementId))
+    .limit(1);
+
+  if (!announcement) {
+    redirect("/admin/announcements?error=not-found");
+  }
+
+  await db
+    .update(siteAnnouncements)
+    .set({
+      isActive: parsed.data.isActive,
+      updatedAt: new Date(),
+    })
+    .where(eq(siteAnnouncements.id, announcement.id));
+
+  await writeAdminAuditLog({
+    adminUserId: currentUser.id,
+    action: "announcement.toggle",
+    targetType: "site_announcement",
+    targetId: announcement.id,
+    metadata: {
+      message: announcement.message,
+      previousIsActive: announcement.isActive,
+      nextIsActive: parsed.data.isActive,
+    },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/account");
+  revalidatePath("/admin");
+  revalidatePath("/admin/announcements");
+  revalidatePath("/admin/audit-logs");
+  revalidatePath("/orders");
+  revalidatePath("/products");
+  revalidatePath("/topup");
+  redirect("/admin/announcements?updated=1");
 }

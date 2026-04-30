@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
+import { AnnouncementBar } from "@/components/announcement-bar";
 import { Button } from "@/components/ui/button";
 import { db } from "@/db";
 import { gameCodes, gameMaps, orders, products } from "@/db/schema";
@@ -53,6 +54,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
             <Link href="/products">Browse products</Link>
           </Button>
         </div>
+        <AnnouncementBar />
 
         {params?.success ? (
           <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">

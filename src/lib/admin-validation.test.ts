@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { pointAdjustmentFormSchema } from "@/lib/admin-validation";
+import { announcementFormSchema, pointAdjustmentFormSchema, toggleAnnouncementFormSchema } from "@/lib/admin-validation";
 
 describe("pointAdjustmentFormSchema", () => {
   it("accepts positive and negative non-zero point adjustments with a reason", () => {
@@ -39,5 +39,34 @@ describe("pointAdjustmentFormSchema", () => {
         reason: "ok",
       }).success,
     ).toBe(false);
+  });
+});
+
+describe("announcement validation", () => {
+  it("accepts announcement messages and checkbox state", () => {
+    expect(
+      announcementFormSchema.safeParse({
+        message: "เว็บจะปิดปรับปรุงภายในเวลา 12.00 น.",
+        isActive: "on",
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects very short announcements", () => {
+    expect(
+      announcementFormSchema.safeParse({
+        message: "x",
+        isActive: "on",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("validates announcement toggle input", () => {
+    expect(
+      toggleAnnouncementFormSchema.safeParse({
+        announcementId: "3a6c545c-6672-4ab8-b87c-e1ff7ee1bd17",
+        isActive: "true",
+      }).success,
+    ).toBe(true);
   });
 });

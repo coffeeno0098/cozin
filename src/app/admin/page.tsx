@@ -1,16 +1,23 @@
 import { count, sql } from "drizzle-orm";
-import { BadgeCheck, Box, Coins, ReceiptText, ScrollText, Users } from "lucide-react";
+import { BadgeCheck, Box, Coins, Megaphone, ReceiptText, ScrollText, Users } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { db } from "@/db";
-import { adminAuditLogs, gameCodes, orders, payments, products, users } from "@/db/schema";
+import { adminAuditLogs, gameCodes, orders, payments, products, siteAnnouncements, users } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
 
 async function getCount(
-  table: typeof users | typeof products | typeof gameCodes | typeof orders | typeof payments | typeof adminAuditLogs,
+  table:
+    | typeof users
+    | typeof products
+    | typeof gameCodes
+    | typeof orders
+    | typeof payments
+    | typeof adminAuditLogs
+    | typeof siteAnnouncements,
 ) {
   const [row] = await db.select({ value: count() }).from(table);
 
@@ -20,13 +27,14 @@ async function getCount(
 export default async function AdminPage() {
   const currentUser = await requireAdmin();
 
-  const [userCount, productCount, codeCount, orderCount, paymentCount, auditLogCount] = await Promise.all([
+  const [userCount, productCount, codeCount, orderCount, paymentCount, auditLogCount, announcementCount] = await Promise.all([
     getCount(users),
     getCount(products),
     getCount(gameCodes),
     getCount(orders),
     getCount(payments),
     getCount(adminAuditLogs),
+    getCount(siteAnnouncements),
   ]);
 
   const [stockSummary] = await db
@@ -44,6 +52,7 @@ export default async function AdminPage() {
     { label: "Orders", value: orderCount, icon: ReceiptText },
     { label: "Payments", value: paymentCount, icon: Coins },
     { label: "Audit logs", value: auditLogCount, icon: ScrollText },
+    { label: "Announcements", value: announcementCount, icon: Megaphone },
   ];
 
   return (
@@ -60,7 +69,7 @@ export default async function AdminPage() {
           </Button>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-7">
           {stats.map((stat) => {
             const Icon = stat.icon;
 
@@ -118,6 +127,15 @@ export default async function AdminPage() {
             </p>
             <Button className="mt-5" variant="outline" asChild>
               <Link href="/admin/payments">View payments</Link>
+            </Button>
+          </div>
+          <div className="rounded-lg border p-5">
+            <h2 className="font-semibold">Announcements</h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Publish a scrolling message for customers under the top navigation.
+            </p>
+            <Button className="mt-5" variant="outline" asChild>
+              <Link href="/admin/announcements">Manage announcements</Link>
             </Button>
           </div>
           <div className="rounded-lg border p-5">

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { logoutAction } from "@/app/(auth)/actions";
 import { auth } from "@/auth";
+import { AnnouncementBar } from "@/components/announcement-bar";
 import { Button } from "@/components/ui/button";
 import { db } from "@/db";
 import { users } from "@/db/schema";
@@ -62,6 +63,7 @@ export default async function AccountPage() {
             </form>
           </div>
         </div>
+        <AnnouncementBar />
 
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="rounded-lg border p-5">

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { createTopupAction } from "@/app/topup/actions";
 import { auth } from "@/auth";
+import { AnnouncementBar } from "@/components/announcement-bar";
 import { Button } from "@/components/ui/button";
 import { db } from "@/db";
 import { payments } from "@/db/schema";
@@ -63,6 +64,7 @@ export default async function TopupPage({ searchParams }: TopupPageProps) {
             <Link href="/account">Back to account</Link>
           </Button>
         </div>
+        <AnnouncementBar />
 
         {params?.success ? (
           <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">

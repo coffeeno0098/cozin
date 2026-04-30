@@ -39,6 +39,16 @@ export const pointAdjustmentFormSchema = z.object({
   reason: z.string().trim().min(3).max(500),
 });
 
+export const announcementFormSchema = z.object({
+  message: z.string().trim().min(3).max(500),
+  isActive: z.preprocess((value) => value === "on" || value === "true", z.boolean()),
+});
+
+export const toggleAnnouncementFormSchema = z.object({
+  announcementId: z.string().uuid(),
+  isActive: z.preprocess((value) => value === "true", z.boolean()),
+});
+
 export function createSlug(input: string) {
   return input
     .trim()

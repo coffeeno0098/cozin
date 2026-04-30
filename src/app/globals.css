@@ -130,3 +130,27 @@
     @apply font-sans;
   }
 }
+
+@keyframes cozin-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+.cozin-marquee {
+  display: inline-block;
+  min-width: max-content;
+  padding-left: 100%;
+  animation: cozin-marquee 20s linear infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cozin-marquee {
+    animation: none;
+    padding-left: 0;
+  }
+}
