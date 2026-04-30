@@ -15,6 +15,13 @@
       "when": 1777483339211,
       "tag": "0001_bent_goliath",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777556396373,
+      "tag": "0002_goofy_mastermind",
+      "breakpoints": true
     }
   ]
 }

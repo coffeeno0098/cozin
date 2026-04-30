@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 
 import { db } from "@/db";
 import { gameCodes, gameMaps, products } from "@/db/schema";
+import { writeAdminAuditLog } from "@/lib/admin-audit";
 import { requireAdmin } from "@/lib/admin";
 import { codeFormSchema, createSlug, deleteMapFormSchema, productFormSchema } from "@/lib/admin-validation";
 
@@ -41,6 +42,14 @@ async function createUniqueMapSlug(name: string) {
   }
 
   return `${baseSlug}-${Date.now()}`;
+}
+
+function maskIdentifier(value: string) {
+  if (value.length <= 4) {
+    return "*".repeat(value.length);
+  }
+
+  return `${"*".repeat(Math.max(value.length - 4, 0))}${value.slice(-4)}`;
 }
 
 async function resolveMap(input: { mapId?: string; newMapName?: string }) {
@@ -83,7 +92,7 @@ async function resolveMap(input: { mapId?: string; newMapName?: string }) {
 }
 
 export async function createProductAction(formData: FormData) {
-  await requireAdmin();
+  const currentUser = await requireAdmin();
 
   const parsed = productFormSchema.safeParse(readForm(formData));
 
@@ -101,24 +110,47 @@ export async function createProductAction(formData: FormData) {
     redirect("/admin/products?error=map");
   }
 
-  await db.insert(products).values({
-    slug,
-    name: parsed.data.name,
-    mapId: selectedMap.id,
-    gameMap: selectedMap.name,
-    description: parsed.data.description,
-    pricePoints: parsed.data.pricePoints,
-    isActive: parsed.data.isActive,
+  const [createdProduct] = await db
+    .insert(products)
+    .values({
+      slug,
+      name: parsed.data.name,
+      mapId: selectedMap.id,
+      gameMap: selectedMap.name,
+      description: parsed.data.description,
+      pricePoints: parsed.data.pricePoints,
+      isActive: parsed.data.isActive,
+    })
+    .returning({
+      id: products.id,
+      slug: products.slug,
+      name: products.name,
+    });
+
+  await writeAdminAuditLog({
+    adminUserId: currentUser.id,
+    action: "product.create",
+    targetType: "product",
+    targetId: createdProduct.id,
+    metadata: {
+      name: createdProduct.name,
+      slug: createdProduct.slug,
+      mapId: selectedMap.id,
+      mapName: selectedMap.name,
+      pricePoints: parsed.data.pricePoints,
+      isActive: parsed.data.isActive,
+    },
   });
 
   revalidatePath("/admin");
+  revalidatePath("/admin/audit-logs");
   revalidatePath("/admin/products");
   revalidatePath("/products");
   redirect("/admin/products?created=1");
 }
 
 export async function deleteMapAction(formData: FormData) {
-  await requireAdmin();
+  const currentUser = await requireAdmin();
 
   const parsed = deleteMapFormSchema.safeParse(readForm(formData));
 
@@ -132,14 +164,36 @@ export async function deleteMapAction(formData: FormData) {
     redirect("/admin/products?error=map-in-use");
   }
 
+  const [selectedMap] = await db
+    .select({
+      id: gameMaps.id,
+      name: gameMaps.name,
+      slug: gameMaps.slug,
+    })
+    .from(gameMaps)
+    .where(eq(gameMaps.id, parsed.data.mapId))
+    .limit(1);
+
   await db.delete(gameMaps).where(eq(gameMaps.id, parsed.data.mapId));
 
+  await writeAdminAuditLog({
+    adminUserId: currentUser.id,
+    action: "map.delete",
+    targetType: "map",
+    targetId: parsed.data.mapId,
+    metadata: {
+      name: selectedMap?.name,
+      slug: selectedMap?.slug,
+    },
+  });
+
+  revalidatePath("/admin/audit-logs");
   revalidatePath("/admin/products");
   redirect("/admin/products?mapDeleted=1");
 }
 
 export async function toggleProductAction(formData: FormData) {
-  await requireAdmin();
+  const currentUser = await requireAdmin();
 
   const productId = formData.get("productId");
   const nextState = formData.get("isActive");
@@ -147,6 +201,17 @@ export async function toggleProductAction(formData: FormData) {
   if (typeof productId !== "string" || typeof nextState !== "string") {
     redirect("/admin/products?error=invalid");
   }
+
+  const [product] = await db
+    .select({
+      id: products.id,
+      name: products.name,
+      slug: products.slug,
+      isActive: products.isActive,
+    })
+    .from(products)
+    .where(eq(products.id, productId))
+    .limit(1);
 
   await db
     .update(products)
@@ -156,14 +221,28 @@ export async function toggleProductAction(formData: FormData) {
     })
     .where(eq(products.id, productId));
 
+  await writeAdminAuditLog({
+    adminUserId: currentUser.id,
+    action: "product.toggle",
+    targetType: "product",
+    targetId: productId,
+    metadata: {
+      name: product?.name,
+      slug: product?.slug,
+      previousIsActive: product?.isActive,
+      nextIsActive: nextState === "true",
+    },
+  });
+
   revalidatePath("/admin");
+  revalidatePath("/admin/audit-logs");
   revalidatePath("/admin/products");
   revalidatePath("/products");
   redirect("/admin/products?updated=1");
 }
 
 export async function createCodeAction(formData: FormData) {
-  await requireAdmin();
+  const currentUser = await requireAdmin();
 
   const parsed = codeFormSchema.safeParse(readForm(formData));
 
@@ -171,13 +250,32 @@ export async function createCodeAction(formData: FormData) {
     redirect("/admin/codes?error=invalid");
   }
 
-  await db.insert(gameCodes).values({
-    productId: parsed.data.productId,
-    gameAccountId: parsed.data.gameAccountId,
-    gamePassword: parsed.data.gamePassword,
+  const [createdCode] = await db
+    .insert(gameCodes)
+    .values({
+      productId: parsed.data.productId,
+      gameAccountId: parsed.data.gameAccountId,
+      gamePassword: parsed.data.gamePassword,
+    })
+    .returning({
+      id: gameCodes.id,
+      productId: gameCodes.productId,
+      gameAccountId: gameCodes.gameAccountId,
+    });
+
+  await writeAdminAuditLog({
+    adminUserId: currentUser.id,
+    action: "code.create",
+    targetType: "game_code",
+    targetId: createdCode.id,
+    metadata: {
+      productId: createdCode.productId,
+      gameAccountIdMasked: maskIdentifier(createdCode.gameAccountId),
+    },
   });
 
   revalidatePath("/admin");
+  revalidatePath("/admin/audit-logs");
   revalidatePath("/admin/codes");
   revalidatePath("/admin/products");
   redirect("/admin/codes?created=1");

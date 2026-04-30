@@ -1,15 +1,17 @@
 import { count, sql } from "drizzle-orm";
-import { BadgeCheck, Box, Coins, ReceiptText, Users } from "lucide-react";
+import { BadgeCheck, Box, Coins, ReceiptText, ScrollText, Users } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { db } from "@/db";
-import { gameCodes, orders, payments, products, users } from "@/db/schema";
+import { adminAuditLogs, gameCodes, orders, payments, products, users } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
 
-async function getCount(table: typeof users | typeof products | typeof gameCodes | typeof orders | typeof payments) {
+async function getCount(
+  table: typeof users | typeof products | typeof gameCodes | typeof orders | typeof payments | typeof adminAuditLogs,
+) {
   const [row] = await db.select({ value: count() }).from(table);
 
   return row.value;
@@ -18,12 +20,13 @@ async function getCount(table: typeof users | typeof products | typeof gameCodes
 export default async function AdminPage() {
   const currentUser = await requireAdmin();
 
-  const [userCount, productCount, codeCount, orderCount, paymentCount] = await Promise.all([
+  const [userCount, productCount, codeCount, orderCount, paymentCount, auditLogCount] = await Promise.all([
     getCount(users),
     getCount(products),
     getCount(gameCodes),
     getCount(orders),
     getCount(payments),
+    getCount(adminAuditLogs),
   ]);
 
   const [stockSummary] = await db
@@ -40,6 +43,7 @@ export default async function AdminPage() {
     { label: "Game codes", value: codeCount, icon: BadgeCheck },
     { label: "Orders", value: orderCount, icon: ReceiptText },
     { label: "Payments", value: paymentCount, icon: Coins },
+    { label: "Audit logs", value: auditLogCount, icon: ScrollText },
   ];
 
   return (
@@ -56,7 +60,7 @@ export default async function AdminPage() {
           </Button>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
           {stats.map((stat) => {
             const Icon = stat.icon;
 
@@ -70,7 +74,7 @@ export default async function AdminPage() {
           })}
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           <div className="rounded-lg border p-5">
             <h2 className="font-semibold">Products</h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
@@ -105,6 +109,15 @@ export default async function AdminPage() {
             </p>
             <Button className="mt-5" variant="outline" asChild>
               <Link href="/admin/payments">View payments</Link>
+            </Button>
+          </div>
+          <div className="rounded-lg border p-5">
+            <h2 className="font-semibold">Audit logs</h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Review important admin actions such as product changes, map deletion, and code creation.
+            </p>
+            <Button className="mt-5" variant="outline" asChild>
+              <Link href="/admin/audit-logs">View logs</Link>
             </Button>
           </div>
         </div>

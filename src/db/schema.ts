@@ -44,6 +44,24 @@ export const users = pgTable(
   ],
 );
 
+export const adminAuditLogs = pgTable(
+  "admin_audit_logs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    adminUserId: uuid("admin_user_id").references(() => users.id, { onDelete: "set null" }),
+    action: text("action").notNull(),
+    targetType: text("target_type").notNull(),
+    targetId: uuid("target_id"),
+    metadata: jsonb("metadata"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("admin_audit_logs_admin_user_idx").on(table.adminUserId),
+    index("admin_audit_logs_action_idx").on(table.action),
+    index("admin_audit_logs_created_at_idx").on(table.createdAt),
+  ],
+);
+
 export const accounts = pgTable(
   "accounts",
   {
