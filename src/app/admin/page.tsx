@@ -62,7 +62,7 @@ export default async function AdminPage() {
           })}
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-lg border p-5">
             <h2 className="font-semibold">Products</h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
@@ -90,12 +90,21 @@ export default async function AdminPage() {
               <Link href="/admin/orders">View orders</Link>
             </Button>
           </div>
+          <div className="rounded-lg border p-5">
+            <h2 className="font-semibold">Payments</h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Review TrueMoney top-ups, verification status, granted points, and failed payment reasons.
+            </p>
+            <Button className="mt-5" variant="outline" asChild>
+              <Link href="/admin/payments">View payments</Link>
+            </Button>
+          </div>
         </div>
 
         <div className="rounded-lg border p-5">
           <h2 className="font-semibold">Next admin tools</h2>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Order review and payment verification views will plug into this dashboard after product stock is ready.
+            Stock summaries and manual point adjustments can plug into this dashboard next.
           </p>
         </div>
       </section>
