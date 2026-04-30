@@ -24,6 +24,7 @@ const errorMessages: Record<string, string> = {
   "out-of-stock": "This product is out of stock.",
   "not-enough-points": "You do not have enough Point for this product.",
   "not-found": "This product is unavailable.",
+  "rate-limit": "Too many purchase attempts. Please wait a moment and try again.",
 };
 
 function getStockStatus(availableCodes: number) {

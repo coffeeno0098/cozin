@@ -13,6 +13,7 @@ type LoginPageProps = {
 const errorMessages: Record<string, string> = {
   invalid: "กรุณากรอก username และ password ให้ถูกต้อง",
   credentials: "username หรือ password ไม่ถูกต้อง",
+  "rate-limit": "ลองเข้าสู่ระบบถี่เกินไป กรุณารอสักครู่แล้วลองใหม่",
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
@@ -61,7 +62,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               type="password"
               autoComplete="current-password"
               required
-              minLength={8}
+              minLength={6}
               className="h-10 w-full rounded-md border bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
             />
           </label>

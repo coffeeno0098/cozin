@@ -12,6 +12,7 @@ type RegisterPageProps = {
 const errorMessages: Record<string, string> = {
   invalid: "กรุณาตรวจสอบข้อมูลสมัครสมาชิกอีกครั้ง",
   duplicate: "username หรือ email นี้ถูกใช้งานแล้ว",
+  "rate-limit": "สมัครสมาชิกถี่เกินไป กรุณารอสักครู่แล้วลองใหม่",
 };
 
 export default async function RegisterPage({ searchParams }: RegisterPageProps) {
@@ -64,7 +65,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
               type="password"
               autoComplete="new-password"
               required
-              minLength={8}
+              minLength={6}
               className="h-10 w-full rounded-md border bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
             />
           </label>
@@ -75,7 +76,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
               type="password"
               autoComplete="new-password"
               required
-              minLength={8}
+              minLength={6}
               className="h-10 w-full rounded-md border bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
             />
           </label>

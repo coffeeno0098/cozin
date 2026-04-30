@@ -63,6 +63,34 @@ export function getTrueMoneyMessage(code?: string, fallback?: string) {
   return fallback || "TrueMoney could not verify this gift link.";
 }
 
+const nonRetryableFailureCodes = new Set([
+  "CANNOT_GET_OWN_VOUCHER",
+  "INVALID_PHONE_NUMBER",
+  "TARGET_USER_REDEEMED",
+  "VOUCHER_EXPIRED",
+  "VOUCHER_NOT_FOUND",
+  "VOUCHER_OUT_OF_STOCK",
+]);
+
+export function isRetryableTrueMoneyFailure(rawResponse: unknown) {
+  if (!isRecord(rawResponse)) {
+    return true;
+  }
+
+  const code = typeof rawResponse.code === "string" ? rawResponse.code : undefined;
+  const statusCode = typeof rawResponse.statusCode === "number" ? rawResponse.statusCode : undefined;
+
+  if (code && nonRetryableFailureCodes.has(code)) {
+    return false;
+  }
+
+  if (statusCode === 403 || statusCode === 408 || statusCode === 429 || statusCode === 500 || statusCode === 502 || statusCode === 503 || statusCode === 504) {
+    return true;
+  }
+
+  return !code;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }

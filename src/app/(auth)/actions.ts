@@ -10,6 +10,7 @@ import { signIn, signOut } from "@/auth";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { loginSchema, registerSchema } from "@/lib/auth/validation";
+import { buildRateLimitKey, checkRateLimit, rateLimitWindows } from "@/lib/rate-limit";
 
 function getString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -18,9 +19,18 @@ function getString(formData: FormData, key: string) {
 }
 
 export async function loginAction(formData: FormData) {
+  const username = getString(formData, "username");
+  const password = getString(formData, "password");
+  const rateLimitKey = await buildRateLimitKey("login", username || "anonymous");
+  const rateLimit = checkRateLimit(rateLimitKey, rateLimitWindows.login);
+
+  if (!rateLimit.allowed) {
+    redirect("/login?error=rate-limit");
+  }
+
   const parsed = loginSchema.safeParse({
-    username: getString(formData, "username"),
-    password: getString(formData, "password"),
+    username,
+    password,
   });
 
   if (!parsed.success) {
@@ -47,8 +57,16 @@ export async function loginAction(formData: FormData) {
 }
 
 export async function registerAction(formData: FormData) {
+  const rawUsername = getString(formData, "username");
+  const rateLimitKey = await buildRateLimitKey("register", rawUsername || "anonymous");
+  const rateLimit = checkRateLimit(rateLimitKey, rateLimitWindows.register);
+
+  if (!rateLimit.allowed) {
+    redirect("/register?error=rate-limit");
+  }
+
   const parsed = registerSchema.safeParse({
-    username: getString(formData, "username"),
+    username: rawUsername,
     email: getString(formData, "email"),
     password: getString(formData, "password"),
     confirmPassword: getString(formData, "confirmPassword"),

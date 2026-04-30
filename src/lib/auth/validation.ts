@@ -15,13 +15,13 @@ const optionalEmailSchema = z.preprocess(
 
 export const loginSchema = z.object({
   username: usernameSchema,
-  password: z.string().min(8, "Password must be at least 8 characters.").max(128),
+  password: z.string().min(6, "Password must be at least 6 characters.").max(128),
 });
 
 export const registerSchema = loginSchema
   .extend({
     email: optionalEmailSchema,
-    confirmPassword: z.string().min(8).max(128),
+    confirmPassword: z.string().min(6).max(128),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match.",

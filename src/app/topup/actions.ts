@@ -9,7 +9,8 @@ import { auth } from "@/auth";
 import { db } from "@/db";
 import { payments, pointTransactions, users } from "@/db/schema";
 import { env } from "@/lib/env";
-import { extractTrueMoneyVoucherCode, redeemTrueMoneyVoucher } from "@/lib/truemoney";
+import { buildRateLimitKey, checkRateLimit, rateLimitWindows } from "@/lib/rate-limit";
+import { extractTrueMoneyVoucherCode, isRetryableTrueMoneyFailure, redeemTrueMoneyVoucher } from "@/lib/truemoney";
 
 const topupSchema = z.object({
   voucherUrl: z
@@ -25,6 +26,13 @@ export async function createTopupAction(formData: FormData) {
 
   if (!session?.user?.id) {
     redirect("/login");
+  }
+
+  const rateLimitKey = await buildRateLimitKey("topup", session.user.id);
+  const rateLimit = checkRateLimit(rateLimitKey, rateLimitWindows.topup);
+
+  if (!rateLimit.allowed) {
+    redirect("/topup?error=rate-limit");
   }
 
   const parsed = topupSchema.safeParse({
@@ -50,6 +58,7 @@ export async function createTopupAction(formData: FormData) {
       id: payments.id,
       userId: payments.userId,
       status: payments.status,
+      rawResponse: payments.rawResponse,
     })
     .from(payments)
     .where(eq(payments.externalReference, voucherCode))
@@ -61,6 +70,10 @@ export async function createTopupAction(formData: FormData) {
     }
 
     if (existingPayment.status === "verified" || existingPayment.userId !== session.user.id) {
+      redirect("/topup?error=duplicate");
+    }
+
+    if (!isRetryableTrueMoneyFailure(existingPayment.rawResponse)) {
       redirect("/topup?error=duplicate");
     }
   }

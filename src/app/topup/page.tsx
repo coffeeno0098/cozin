@@ -22,6 +22,7 @@ function getTopupErrorMessage(error?: string, reason?: string) {
   if (error === "config") return "Top-up is not ready yet. Please set TRUEMONEY_RECEIVER_PHONE first.";
   if (error === "duplicate") return "This TrueMoney gift link has already been used.";
   if (error === "processing") return "This TrueMoney gift link is already being processed.";
+  if (error === "rate-limit") return "Too many top-up attempts. Please wait a moment and try again.";
   if (error === "redeem") return reason || "TrueMoney could not verify this gift link.";
   return "Top-up failed. Please check the gift link and try again.";
 }

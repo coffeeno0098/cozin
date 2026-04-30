@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { extractTrueMoneyVoucherCode, getTrueMoneyMessage } from "@/lib/truemoney";
+import { extractTrueMoneyVoucherCode, getTrueMoneyMessage, isRetryableTrueMoneyFailure } from "@/lib/truemoney";
 
 describe("extractTrueMoneyVoucherCode", () => {
   it("extracts the voucher code from a TrueMoney gift link", () => {
@@ -34,5 +34,18 @@ describe("getTrueMoneyMessage", () => {
 
   it("returns a generic message when no code or fallback is available", () => {
     expect(getTrueMoneyMessage()).toBe("TrueMoney could not verify this gift link.");
+  });
+});
+
+describe("isRetryableTrueMoneyFailure", () => {
+  it("does not retry final TrueMoney business errors", () => {
+    expect(isRetryableTrueMoneyFailure({ code: "VOUCHER_OUT_OF_STOCK", statusCode: 400 })).toBe(false);
+    expect(isRetryableTrueMoneyFailure({ code: "VOUCHER_EXPIRED", statusCode: 400 })).toBe(false);
+  });
+
+  it("allows retries for temporary system errors", () => {
+    expect(isRetryableTrueMoneyFailure({ statusCode: 403 })).toBe(true);
+    expect(isRetryableTrueMoneyFailure({ statusCode: 503 })).toBe(true);
+    expect(isRetryableTrueMoneyFailure(null)).toBe(true);
   });
 });
