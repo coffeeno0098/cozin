@@ -27,7 +27,7 @@ export default async function Home() {
               src="/logo.png"
               alt=""
               width={72}
-              height={72}
+              height={48}
               className="animate-fade-in rounded-xl"
               priority
             />

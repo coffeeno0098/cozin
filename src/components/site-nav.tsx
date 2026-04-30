@@ -20,8 +20,8 @@ export async function SiteNav() {
           <Image
             src="/logo.png"
             alt="Cozin logo"
-            width={28}
-            height={28}
+            width={30}
+            height={20}
             className="rounded-sm"
             priority
           />

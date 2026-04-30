@@ -26,6 +26,7 @@ export default function RootLayout({
     <html
       lang="th"
       className={`${inter.variable} h-full antialiased`}
+      data-scroll-behavior="smooth"
     >
       <body className="min-h-full flex flex-col">
         <a href="#main-content" className="skip-link">
