@@ -49,6 +49,7 @@ Use this file as the project memory for future Codex chats. Add short notes here
 - Low-stock status uses `LOW_STOCK_THRESHOLD = 5` and is covered by `src/lib/admin-dashboard.test.ts`.
 - Verified top-up point grants live in `src/lib/topup.ts` and are covered by transaction tests.
 - Admin orders/payments list filter parsing lives in `src/lib/admin-list-filters.ts`.
+- Production launch checks live in `PRODUCTION_CHECKLIST.md`.
 - Admin server actions use `requireAdmin()`.
 - Admin changes write `adminAuditLogs`, with metadata sanitization for sensitive keys.
 - Tests currently cover auth validation, admin validation, admin audit sanitization, rate limit behavior, and TrueMoney helpers.
@@ -143,3 +144,4 @@ Goal: reduce operational surprises once real money/users exist.
 - 2026-05-01: Started backend hardening by extracting purchase/top-up safety helpers and adding regression tests for money/stock/duplicate-voucher behavior.
 - 2026-05-01: Added admin dashboard summary helper, low-stock threshold tests, and upgraded `/admin` with operating metrics, latest orders/payments, and stock alerts.
 - 2026-05-01: Extracted verified top-up transaction logic into a tested helper and added search/status filters to admin orders/payments.
+- 2026-05-01: Added production readiness checklist for env, migrations, auth, money/stock smoke tests, backups, logs, and deploy checks.
