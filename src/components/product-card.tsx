@@ -6,6 +6,7 @@ type ProductCardProps = {
     name: string;
     gameMap: string;
     description: string | null;
+    imageUrl: string | null;
     pricePoints: number;
     availableCodes: number;
   };
@@ -40,7 +41,21 @@ export function ProductCard({ product }: ProductCardProps) {
   const stock = getStockDisplay(product.availableCodes);
 
   return (
-    <article className="utility-card group animate-scale-in">
+    <article className="utility-card group animate-scale-in overflow-hidden p-0">
+      {product.imageUrl ? (
+        <div className="aspect-[16/9] overflow-hidden border-b border-[var(--hairline)] bg-[var(--surface-parchment)]">
+          {/* eslint-disable-next-line @next/next/no-img-element -- Admin-provided image URLs can come from any domain. */}
+          <img
+            src={product.imageUrl}
+            alt={product.name}
+            loading="lazy"
+            referrerPolicy="no-referrer"
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+          />
+        </div>
+      ) : null}
+
+      <div className="p-6">
       {/* Header: map + stock */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
@@ -81,6 +96,7 @@ export function ProductCard({ product }: ProductCardProps) {
           <path d="M1 1l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </Link>
+      </div>
     </article>
   );
 }

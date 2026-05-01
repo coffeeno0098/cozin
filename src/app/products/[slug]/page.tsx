@@ -61,6 +61,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
       name: products.name,
       gameMap: sql<string>`coalesce(${gameMaps.name}, ${products.gameMap})`,
       description: products.description,
+      imageUrl: products.imageUrl,
       pricePoints: products.pricePoints,
       isActive: products.isActive,
       availableCodes: sql<number>`count(${gameCodes.id})::int`,
@@ -120,6 +121,17 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
           <div className="mx-auto max-w-4xl animate-fade-in-up">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
               <div>
+                {product.imageUrl ? (
+                  <div className="mb-6 aspect-[16/9] overflow-hidden rounded-2xl border border-[var(--hairline)] bg-[var(--background)]">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- Admin-provided image URLs can come from any domain. */}
+                    <img
+                      src={product.imageUrl}
+                      alt={product.name}
+                      className="h-full w-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                ) : null}
                 <div className="flex flex-wrap items-center gap-3">
                   <p className="text-caption text-[var(--muted-foreground)]">
                     {product.gameMap}

@@ -16,6 +16,7 @@ import {
   pointAdjustmentFormSchema,
   productFormSchema,
   toggleAnnouncementFormSchema,
+  updateMapImageFormSchema,
 } from "@/lib/admin-validation";
 
 function readForm(formData: FormData) {
@@ -60,15 +61,25 @@ function maskIdentifier(value: string) {
   return `${"*".repeat(Math.max(value.length - 4, 0))}${value.slice(-4)}`;
 }
 
-async function resolveMap(input: { mapId?: string; newMapName?: string }) {
+async function resolveMap(input: { mapId?: string; newMapName?: string; newMapImageUrl?: string | null }) {
   if (input.newMapName) {
     const [existingMap] = await db
-      .select({ id: gameMaps.id, name: gameMaps.name })
+      .select({ id: gameMaps.id, name: gameMaps.name, slug: gameMaps.slug })
       .from(gameMaps)
       .where(eq(gameMaps.name, input.newMapName))
       .limit(1);
 
     if (existingMap) {
+      if (input.newMapImageUrl) {
+        await db
+          .update(gameMaps)
+          .set({
+            imageUrl: input.newMapImageUrl,
+            updatedAt: new Date(),
+          })
+          .where(eq(gameMaps.id, existingMap.id));
+      }
+
       return existingMap;
     }
 
@@ -77,6 +88,7 @@ async function resolveMap(input: { mapId?: string; newMapName?: string }) {
       .values({
         name: input.newMapName,
         slug: await createUniqueMapSlug(input.newMapName),
+        imageUrl: input.newMapImageUrl ?? null,
       })
       .returning({
         id: gameMaps.id,
@@ -112,6 +124,7 @@ export async function createProductAction(formData: FormData) {
   const selectedMap = await resolveMap({
     mapId: parsed.data.mapId,
     newMapName: parsed.data.newMapName,
+    newMapImageUrl: parsed.data.newMapImageUrl,
   });
 
   if (!selectedMap) {
@@ -126,6 +139,7 @@ export async function createProductAction(formData: FormData) {
       mapId: selectedMap.id,
       gameMap: selectedMap.name,
       description: parsed.data.description,
+      imageUrl: parsed.data.imageUrl ?? null,
       pricePoints: parsed.data.pricePoints,
       isActive: parsed.data.isActive,
     })
@@ -145,6 +159,8 @@ export async function createProductAction(formData: FormData) {
       slug: createdProduct.slug,
       mapId: selectedMap.id,
       mapName: selectedMap.name,
+      hasNewMapImage: Boolean(parsed.data.newMapImageUrl),
+      hasImage: Boolean(parsed.data.imageUrl),
       pricePoints: parsed.data.pricePoints,
       isActive: parsed.data.isActive,
     },
@@ -155,6 +171,58 @@ export async function createProductAction(formData: FormData) {
   revalidatePath("/admin/products");
   revalidatePath("/products");
   redirect("/admin/products?created=1");
+}
+
+export async function updateMapImageAction(formData: FormData) {
+  const currentUser = await requireAdmin();
+
+  const parsed = updateMapImageFormSchema.safeParse(readForm(formData));
+
+  if (!parsed.success) {
+    redirect("/admin/products?error=invalid-map-image");
+  }
+
+  const [selectedMap] = await db
+    .select({
+      id: gameMaps.id,
+      name: gameMaps.name,
+      slug: gameMaps.slug,
+      imageUrl: gameMaps.imageUrl,
+    })
+    .from(gameMaps)
+    .where(eq(gameMaps.id, parsed.data.mapId))
+    .limit(1);
+
+  if (!selectedMap) {
+    redirect("/admin/products?error=map");
+  }
+
+  await db
+    .update(gameMaps)
+    .set({
+      imageUrl: parsed.data.imageUrl,
+      updatedAt: new Date(),
+    })
+    .where(eq(gameMaps.id, parsed.data.mapId));
+
+  await writeAdminAuditLog({
+    adminUserId: currentUser.id,
+    action: "map.image.update",
+    targetType: "map",
+    targetId: selectedMap.id,
+    metadata: {
+      name: selectedMap.name,
+      slug: selectedMap.slug,
+      hadImage: Boolean(selectedMap.imageUrl),
+      hasImage: Boolean(parsed.data.imageUrl),
+    },
+  });
+
+  revalidatePath("/admin/audit-logs");
+  revalidatePath("/admin/products");
+  revalidatePath("/products");
+  revalidatePath(`/products/maps/${selectedMap.slug}`);
+  redirect("/admin/products?mapUpdated=1");
 }
 
 export async function deleteMapAction(formData: FormData) {

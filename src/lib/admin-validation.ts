@@ -10,9 +10,17 @@ export const productFormSchema = z.object({
     (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
     z.string().trim().min(1).max(120).optional(),
   ),
+  newMapImageUrl: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? null : value),
+    z.string().trim().url().max(2000).nullable().optional(),
+  ),
   description: z.preprocess(
     (value) => (typeof value === "string" && value.trim() === "" ? null : value),
     z.string().trim().max(1000).nullable(),
+  ),
+  imageUrl: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? null : value),
+    z.string().trim().url().max(2000).nullable().optional(),
   ),
   pricePoints: z.coerce.number().int().min(1).max(1_000_000),
   isActive: z.preprocess((value) => value === "on" || value === "true", z.boolean()),
@@ -23,6 +31,14 @@ export const productFormSchema = z.object({
 
 export const deleteMapFormSchema = z.object({
   mapId: z.string().uuid(),
+});
+
+export const updateMapImageFormSchema = z.object({
+  mapId: z.string().uuid(),
+  imageUrl: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? null : value),
+    z.string().trim().url().max(2000).nullable(),
+  ),
 });
 
 export const codeFormSchema = z.object({

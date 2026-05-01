@@ -1,6 +1,103 @@
 import { describe, expect, it } from "vitest";
 
-import { announcementFormSchema, pointAdjustmentFormSchema, toggleAnnouncementFormSchema } from "@/lib/admin-validation";
+import {
+  announcementFormSchema,
+  pointAdjustmentFormSchema,
+  productFormSchema,
+  toggleAnnouncementFormSchema,
+  updateMapImageFormSchema,
+} from "@/lib/admin-validation";
+
+describe("productFormSchema", () => {
+  const baseProduct = {
+    name: "Captain",
+    newMapName: "Blox Fruit",
+    description: "",
+    pricePoints: "10",
+    isActive: "on",
+  };
+
+  it("accepts an optional product image URL", () => {
+    const parsed = productFormSchema.safeParse({
+      ...baseProduct,
+      imageUrl: "https://example.com/product.png",
+    });
+
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.imageUrl).toBe("https://example.com/product.png");
+    }
+  });
+
+  it("normalizes an empty product image URL to null", () => {
+    const parsed = productFormSchema.safeParse({
+      ...baseProduct,
+      imageUrl: "",
+    });
+
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.imageUrl).toBeNull();
+    }
+  });
+
+  it("allows product image URL to be omitted", () => {
+    expect(productFormSchema.safeParse(baseProduct).success).toBe(true);
+  });
+
+  it("rejects invalid product image URLs", () => {
+    expect(
+      productFormSchema.safeParse({
+        ...baseProduct,
+        imageUrl: "not-a-url",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("accepts an optional new map image URL", () => {
+    const parsed = productFormSchema.safeParse({
+      ...baseProduct,
+      newMapImageUrl: "https://example.com/map.png",
+    });
+
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.newMapImageUrl).toBe("https://example.com/map.png");
+    }
+  });
+});
+
+describe("updateMapImageFormSchema", () => {
+  it("accepts valid map image URLs", () => {
+    expect(
+      updateMapImageFormSchema.safeParse({
+        mapId: "3a6c545c-6672-4ab8-b87c-e1ff7ee1bd17",
+        imageUrl: "https://example.com/map.png",
+      }).success,
+    ).toBe(true);
+  });
+
+  it("normalizes an empty map image URL to null", () => {
+    const parsed = updateMapImageFormSchema.safeParse({
+      mapId: "3a6c545c-6672-4ab8-b87c-e1ff7ee1bd17",
+      imageUrl: "",
+    });
+
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.imageUrl).toBeNull();
+    }
+  });
+
+  it("rejects invalid map image URLs", () => {
+    expect(
+      updateMapImageFormSchema.safeParse({
+        mapId: "3a6c545c-6672-4ab8-b87c-e1ff7ee1bd17",
+        imageUrl: "not-a-url",
+      }).success,
+    ).toBe(false);
+  });
+});
 
 describe("pointAdjustmentFormSchema", () => {
   it("accepts positive and negative non-zero point adjustments with a reason", () => {

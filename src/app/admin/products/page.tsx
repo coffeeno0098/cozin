@@ -1,7 +1,7 @@
 import { asc, count, eq, sql } from "drizzle-orm";
 import Link from "next/link";
 
-import { createProductAction, deleteMapAction, toggleProductAction } from "@/app/admin/actions";
+import { createProductAction, deleteMapAction, toggleProductAction, updateMapImageAction } from "@/app/admin/actions";
 import { db } from "@/db";
 import { gameCodes, gameMaps, products } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin";
@@ -10,6 +10,7 @@ type ProductsPageProps = {
   searchParams?: Promise<{
     created?: string;
     updated?: string;
+    mapUpdated?: string;
     mapDeleted?: string;
     error?: string;
   }>;
@@ -34,6 +35,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       name: products.name,
       gameMap: sql<string>`coalesce(${gameMaps.name}, ${products.gameMap})`,
       description: products.description,
+      imageUrl: products.imageUrl,
       pricePoints: products.pricePoints,
       isActive: products.isActive,
       availableCodes: sql<number>`coalesce(count(${gameCodes.id}) filter (where ${gameCodes.status} = 'available'), 0)::int`,
@@ -51,6 +53,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     .select({
       id: gameMaps.id,
       name: gameMaps.name,
+      imageUrl: gameMaps.imageUrl,
       productCount: count(products.id),
     })
     .from(gameMaps)
@@ -79,10 +82,12 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             <div aria-live="polite" className="space-y-3 mb-8">
               {params?.created ? <div className="alert-success">Product created.</div> : null}
               {params?.updated ? <div className="alert-success">Product updated.</div> : null}
+              {params?.mapUpdated ? <div className="alert-success">Map image updated.</div> : null}
               {params?.mapDeleted ? <div className="alert-success">Map deleted.</div> : null}
               {params?.error ? (
                 <div className="alert-error">
                   {params.error === "map-in-use" ? "This map is still used by products."
+                    : params.error === "invalid-map-image" ? "Please enter a valid map image URL."
                     : params.error === "map" ? "Please select or create a map."
                     : "Please check the product form."}
                 </div>
@@ -117,8 +122,34 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                   </span>
                 </label>
                 <label className="block space-y-2">
+                  <span className="text-caption-strong">New Map Image URL</span>
+                  <input
+                    name="newMapImageUrl"
+                    type="url"
+                    placeholder="https://example.com/map.png"
+                    spellCheck={false}
+                    className="input-apple"
+                  />
+                  <span className="text-fine-print text-[var(--muted-foreground)]">
+                    Optional. Used when creating a new map from this form.
+                  </span>
+                </label>
+                <label className="block space-y-2">
                   <span className="text-caption-strong">Price Point</span>
                   <input name="pricePoints" type="number" min={1} required className="input-apple" />
+                </label>
+                <label className="block space-y-2">
+                  <span className="text-caption-strong">Image URL</span>
+                  <input
+                    name="imageUrl"
+                    type="url"
+                    placeholder="https://example.com/product.png"
+                    spellCheck={false}
+                    className="input-apple"
+                  />
+                  <span className="text-fine-print text-[var(--muted-foreground)]">
+                    Optional. Paste a direct image URL to show it on product cards.
+                  </span>
                 </label>
                 <label className="block space-y-2">
                   <span className="text-caption-strong">Description</span>
@@ -136,20 +167,52 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                 <div className="utility-card animate-fade-in-up delay-1">
                   <h2 className="text-body-strong">Maps</h2>
                   <p className="text-caption mt-1 text-[var(--muted-foreground)]">Delete maps only when no product is using them.</p>
-                  <div className="mt-4 flex flex-wrap gap-2">
+                  <div className="mt-4 grid gap-3">
                     {mapRows.length === 0 ? (
                       <p className="text-caption text-[var(--muted-foreground)]">No maps yet.</p>
                     ) : (
                       mapRows.map((map) => (
-                        <div key={map.id} className="flex items-center gap-2 rounded-full border border-[var(--hairline)] bg-[var(--surface-parchment)] px-3 py-1.5 text-caption">
-                          <span translate="no">{map.name}</span>
-                          <span className="text-[var(--muted-foreground)] tabular-nums">({map.productCount})</span>
-                          <form action={deleteMapAction}>
-                            <input type="hidden" name="mapId" value={map.id} />
-                            <button type="submit" disabled={map.productCount > 0} className="text-fine-print text-[var(--primary)] disabled:text-[var(--muted-foreground)] disabled:cursor-not-allowed hover:underline">
-                              Delete
-                            </button>
-                          </form>
+                        <div key={map.id} className="rounded-2xl border border-[var(--hairline)] bg-[var(--surface-parchment)] p-3">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                            {map.imageUrl ? (
+                              <div className="aspect-[16/9] w-full overflow-hidden rounded-xl border border-[var(--hairline)] bg-[var(--background)] sm:w-28">
+                                {/* eslint-disable-next-line @next/next/no-img-element -- Admin-provided image URLs can come from any domain. */}
+                                <img
+                                  src={map.imageUrl}
+                                  alt={map.name}
+                                  loading="lazy"
+                                  referrerPolicy="no-referrer"
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                            ) : null}
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 text-caption">
+                                <span className="font-medium" translate="no">{map.name}</span>
+                                <span className="text-[var(--muted-foreground)] tabular-nums">({map.productCount})</span>
+                              </div>
+                              <form action={updateMapImageAction} className="mt-2 flex flex-col gap-2 sm:flex-row">
+                                <input type="hidden" name="mapId" value={map.id} />
+                                <input
+                                  name="imageUrl"
+                                  type="url"
+                                  defaultValue={map.imageUrl ?? ""}
+                                  placeholder="Map image URL"
+                                  spellCheck={false}
+                                  className="input-apple min-h-10 text-caption sm:flex-1"
+                                />
+                                <button type="submit" className="btn-pill-ghost px-4 py-2 text-caption">
+                                  Save
+                                </button>
+                              </form>
+                            </div>
+                            <form action={deleteMapAction}>
+                              <input type="hidden" name="mapId" value={map.id} />
+                              <button type="submit" disabled={map.productCount > 0} className="text-fine-print text-[var(--primary)] disabled:text-[var(--muted-foreground)] disabled:cursor-not-allowed hover:underline">
+                                Delete
+                              </button>
+                            </form>
+                          </div>
                         </div>
                       ))
                     )}
@@ -165,6 +228,18 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                       <div key={product.id} className={`utility-card animate-fade-in-up ${i < 5 ? `delay-${i + 2}` : ""}`}>
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                           <div className="min-w-0 flex-1">
+                            {product.imageUrl ? (
+                              <div className="mb-4 aspect-[16/9] max-w-sm overflow-hidden rounded-xl border border-[var(--hairline)] bg-[var(--surface-parchment)]">
+                                {/* eslint-disable-next-line @next/next/no-img-element -- Admin-provided image URLs can come from any domain. */}
+                                <img
+                                  src={product.imageUrl}
+                                  alt={product.name}
+                                  loading="lazy"
+                                  referrerPolicy="no-referrer"
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                            ) : null}
                             <div className="flex flex-wrap items-center gap-2">
                               <h3 className="text-body-strong truncate">{product.name}</h3>
                               <span className={product.isActive ? "badge-success" : "badge-neutral"}>

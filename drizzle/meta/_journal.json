@@ -36,6 +36,20 @@
       "when": 1777558219284,
       "tag": "0004_lyrical_doomsday",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1777643469491,
+      "tag": "0005_slow_boomer",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1777644512578,
+      "tag": "0006_gray_king_bedlam",
+      "breakpoints": true
     }
   ]
 }
