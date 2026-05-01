@@ -1,83 +1,97 @@
+import { eq } from "drizzle-orm";
 import Image from "next/image";
 import Link from "next/link";
 
 import { auth } from "@/auth";
 import { AnnouncementBar } from "@/components/announcement-bar";
+import { db } from "@/db";
+import { users } from "@/db/schema";
 
 export async function SiteNav() {
   const session = await auth();
   const isSignedIn = Boolean(session?.user?.id);
+  const accountLabel = session?.user?.name || "Account";
+  const [currentUser] = session?.user?.id
+    ? await db
+        .select({
+          points: users.points,
+          role: users.role,
+        })
+        .from(users)
+        .where(eq(users.id, session.user.id))
+        .limit(1)
+    : [];
+  const pointBalance = currentUser?.points ?? 0;
+  const isAdmin = currentUser?.role === "admin";
 
   return (
     <>
-      {/* ── Global Nav (black bar) ── */}
       <nav className="global-nav" aria-label="Global navigation">
-        <Link
-          href="/"
-          className="flex items-center gap-2.5"
-          translate="no"
-        >
+        <Link href="/" className="nav-brand" translate="no">
           <Image
-            src="/logo.png"
+            src="/logomain.png"
             alt="Cozin logo"
-            width={30}
-            height={20}
-            className="rounded-sm"
+            width={96}
+            height={32}
+            className="nav-brand-logo"
             priority
           />
-          <span className="text-nav-link font-semibold tracking-wide uppercase">
-            Cozin
-          </span>
+          <span className="nav-brand-text">Cozin</span>
         </Link>
 
-        {/* Desktop nav links */}
-        <div className="hidden items-center gap-5 sm:flex">
-          <Link href="/products" className="text-nav-link">
-            Products
+        <div className="nav-center">
+          <Link href="/" className="nav-link-pill">
+            หน้าแรก
+          </Link>
+          <Link href="/products" className="nav-link-pill">
+            สินค้าทั้งหมด
           </Link>
           {isSignedIn ? (
             <>
-              <Link href="/topup" className="text-nav-link">
+              <Link href="/topup" className="nav-link-pill">
                 Top Up
               </Link>
-              <Link href="/orders" className="text-nav-link">
-                History
+              <Link href="/orders" className="nav-link-pill">
+                ประวัติการซื้อ
               </Link>
-              <Link
-                href="/account"
-                className="text-nav-link rounded-full bg-white/10 px-3 py-1.5 opacity-100 transition-colors hover:bg-white/20"
-              >
-                Account
+              {isAdmin ? (
+                <Link href="/admin" className="nav-link-pill">
+                  Admin
+                </Link>
+              ) : null}
+            </>
+          ) : (
+            <Link href="/login" className="nav-link-pill">
+              Login
+            </Link>
+          )}
+        </div>
+
+        <div className="nav-actions">
+          {isSignedIn ? (
+            <>
+              <Link href="/topup" className="nav-point-balance">
+                {pointBalance} Point
+              </Link>
+              <Link href="/account" className="nav-action-primary">
+                {accountLabel}
               </Link>
             </>
           ) : (
             <>
-              <Link href="/login" className="text-nav-link">
+              <Link href="/login" className="nav-action-secondary">
                 Login
               </Link>
-              <Link
-                href="/register"
-                className="text-nav-link rounded-full bg-[var(--primary)] px-3 py-1.5 opacity-100 transition-colors hover:bg-[var(--primary-focus)]"
-              >
+              <Link href="/register" className="nav-action-primary">
                 Register
               </Link>
             </>
           )}
         </div>
 
-        {/* Mobile hamburger (zero-JS disclosure) */}
-        <details className="relative sm:hidden">
-          <summary
-            className="flex size-8 cursor-pointer items-center justify-center rounded-md transition-colors hover:bg-white/10 list-none [&::-webkit-details-marker]:hidden"
-            aria-label="Toggle menu"
-          >
-            <svg
-              width="18"
-              height="14"
-              viewBox="0 0 18 14"
-              fill="none"
-              aria-hidden="true"
-            >
+        <details className="nav-mobile-menu">
+          <summary className="nav-mobile-trigger" aria-label="Toggle menu">
+            <svg width="18" height="14" viewBox="0 0 18 14" fill="none" aria-hidden="true">
               <path
                 d="M1 1h16M1 7h16M1 13h16"
                 stroke="currentColor"
@@ -86,46 +100,39 @@ export async function SiteNav() {
               />
             </svg>
           </summary>
-          <div className="absolute right-0 top-full mt-2 w-48 rounded-xl bg-[var(--surface-tile-2)] p-2 shadow-lg">
-            <Link
-              href="/products"
-              className="block rounded-lg px-3 py-2.5 text-sm text-white/90 transition-colors hover:bg-white/10"
-            >
-              Products
+          <div className="nav-mobile-panel">
+            <Link href="/" className="nav-mobile-link">
+              หน้าแรก
+            </Link>
+            <Link href="/products" className="nav-mobile-link">
+              สินค้าทั้งหมด
             </Link>
             {isSignedIn ? (
               <>
-                <Link
-                  href="/topup"
-                  className="block rounded-lg px-3 py-2.5 text-sm text-white/90 transition-colors hover:bg-white/10"
-                >
+                <Link href="/topup" className="nav-mobile-link">
                   Top Up
                 </Link>
-                <Link
-                  href="/orders"
-                  className="block rounded-lg px-3 py-2.5 text-sm text-white/90 transition-colors hover:bg-white/10"
-                >
-                  History
+                <Link href="/orders" className="nav-mobile-link">
+                  ประวัติการซื้อ
                 </Link>
-                <Link
-                  href="/account"
-                  className="block rounded-lg px-3 py-2.5 text-sm text-white/90 transition-colors hover:bg-white/10"
-                >
-                  Account
+                {isAdmin ? (
+                  <Link href="/admin" className="nav-mobile-link">
+                    Admin
+                  </Link>
+                ) : null}
+                <Link href="/account" className="nav-mobile-link">
+                  {accountLabel}
+                </Link>
+                <Link href="/topup" className="nav-mobile-link">
+                  {pointBalance} Point
                 </Link>
               </>
             ) : (
               <>
-                <Link
-                  href="/login"
-                  className="block rounded-lg px-3 py-2.5 text-sm text-white/90 transition-colors hover:bg-white/10"
-                >
+                <Link href="/login" className="nav-mobile-link">
                   Login
                 </Link>
-                <Link
-                  href="/register"
-                  className="block rounded-lg px-3 py-2.5 text-sm text-white/90 transition-colors hover:bg-white/10"
-                >
+                <Link href="/register" className="nav-mobile-link">
                   Register
                 </Link>
               </>
@@ -134,7 +141,6 @@ export async function SiteNav() {
         </details>
       </nav>
 
-      {/* ── Announcement Bar ── */}
       <AnnouncementBar />
     </>
   );

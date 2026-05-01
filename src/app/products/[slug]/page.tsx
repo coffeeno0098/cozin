@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 
 import { buyProductAction } from "@/app/products/actions";
 import { auth } from "@/auth";
-import { AnnouncementBar } from "@/components/announcement-bar";
+import { SiteNav } from "@/components/site-nav";
 import { db } from "@/db";
 import { gameCodes, gameMaps, products, users } from "@/db/schema";
 
@@ -102,10 +102,8 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
   return (
     <>
       {/* ── Sub-nav ── */}
-      <div className="global-nav">
-        <Link href="/" className="text-nav-link font-semibold uppercase tracking-wide" translate="no">
-          Cozin
-        </Link>
+      <SiteNav />
+      <div className="hidden" aria-hidden="true">
         <Link
           href="/products"
           className="text-nav-link opacity-85 hover:opacity-100"
@@ -113,7 +111,6 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
           ← Back to Products
         </Link>
       </div>
-      <AnnouncementBar />
 
       <main id="main-content" className="flex-1">
         {/* ── Hero (parchment) ── */}

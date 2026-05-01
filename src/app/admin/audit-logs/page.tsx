@@ -1,6 +1,6 @@
 import { desc, eq } from "drizzle-orm";
-import Link from "next/link";
 
+import { SiteNav } from "@/components/site-nav";
 import { db } from "@/db";
 import { adminAuditLogs, users } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin";
@@ -42,10 +42,7 @@ export default async function AdminAuditLogsPage() {
 
   return (
     <>
-      <div className="global-nav">
-        <Link href="/admin" className="text-nav-link font-semibold uppercase tracking-wide" translate="no">Cozin Admin</Link>
-        <Link href="/admin" className="text-nav-link opacity-85 hover:opacity-100">← Dashboard</Link>
-      </div>
+      <SiteNav />
 
       <main id="main-content" className="flex-1">
         <section className="tile-parchment tile-section py-12">

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 import { logoutAction } from "@/app/(auth)/actions";
 import { auth } from "@/auth";
-import { AnnouncementBar } from "@/components/announcement-bar";
+import { SiteNav } from "@/components/site-nav";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 
@@ -35,22 +35,7 @@ export default async function AccountPage() {
   return (
     <>
       {/* ── Nav ── */}
-      <div className="global-nav">
-        <Link href="/" className="text-nav-link font-semibold uppercase tracking-wide" translate="no">
-          Cozin
-        </Link>
-        <div className="flex items-center gap-4">
-          <Link href="/products" className="text-nav-link opacity-85 hover:opacity-100">Products</Link>
-          <Link href="/topup" className="text-nav-link opacity-85 hover:opacity-100">Top Up</Link>
-          <Link href="/orders" className="text-nav-link opacity-85 hover:opacity-100">History</Link>
-          {user.role === "admin" ? (
-            <Link href="/admin" className="text-nav-link rounded-full bg-white/10 px-3 py-1.5 opacity-100 hover:bg-white/20">
-              Admin
-            </Link>
-          ) : null}
-        </div>
-      </div>
-      <AnnouncementBar />
+      <SiteNav />
 
       <main id="main-content" className="flex-1">
         {/* ── Header (parchment) ── */}

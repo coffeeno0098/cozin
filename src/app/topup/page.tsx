@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 import { createTopupAction } from "@/app/topup/actions";
 import { auth } from "@/auth";
-import { AnnouncementBar } from "@/components/announcement-bar";
+import { SiteNav } from "@/components/site-nav";
 import { db } from "@/db";
 import { payments } from "@/db/schema";
 
@@ -59,16 +59,7 @@ export default async function TopupPage({ searchParams }: TopupPageProps) {
   return (
     <>
       {/* ── Nav ── */}
-      <div className="global-nav">
-        <Link href="/" className="text-nav-link font-semibold uppercase tracking-wide" translate="no">
-          Cozin
-        </Link>
-        <div className="flex items-center gap-4">
-          <Link href="/products" className="text-nav-link opacity-85 hover:opacity-100">Products</Link>
-          <Link href="/account" className="text-nav-link opacity-85 hover:opacity-100">Account</Link>
-        </div>
-      </div>
-      <AnnouncementBar />
+      <SiteNav />
 
       <main id="main-content" className="flex-1">
         {/* ── Header (parchment) ── */}

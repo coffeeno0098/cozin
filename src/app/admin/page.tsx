@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { SiteNav } from "@/components/site-nav";
 import { requireAdmin } from "@/lib/admin";
 import { getAdminDashboardData } from "@/lib/admin-dashboard";
 
@@ -79,14 +80,7 @@ export default async function AdminPage() {
 
   return (
     <>
-      <div className="global-nav">
-        <Link href="/" className="text-nav-link font-semibold uppercase tracking-wide" translate="no">
-          Cozin
-        </Link>
-        <Link href="/account" className="text-nav-link opacity-85 hover:opacity-100">
-          Back to Account
-        </Link>
-      </div>
+      <SiteNav />
 
       <main id="main-content" className="flex-1">
         <section className="tile-dark tile-section py-12">

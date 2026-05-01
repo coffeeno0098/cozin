@@ -19,7 +19,7 @@ export default async function Home() {
     <>
       <SiteNav />
 
-      <main id="main-content" className="flex-1">
+      <main id="main-content" className="home-black flex-1">
         {/* ── Hero Tile (dark) ── */}
         <section className="tile-dark tile-section">
           <div className="mx-auto flex max-w-5xl flex-col items-center text-center">
