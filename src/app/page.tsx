@@ -1,7 +1,3 @@
-import Image from "next/image";
-import Link from "next/link";
-
-import { auth } from "@/auth";
 import { ProductCard } from "@/components/product-card";
 import { SiteNav } from "@/components/site-nav";
 import { getPublicProducts } from "@/lib/products";
@@ -9,85 +5,27 @@ import { getPublicProducts } from "@/lib/products";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [featuredProducts, session] = await Promise.all([
-    getPublicProducts(3),
-    auth(),
-  ]);
-  const topupHref = session?.user?.id ? "/topup" : "/login";
+  const featuredProducts = await getPublicProducts(3);
 
   return (
     <>
       <SiteNav />
 
       <main id="main-content" className="home-black flex-1">
-        {/* ── Hero Tile (dark) ── */}
-        <section className="tile-dark tile-section">
-          <div className="mx-auto flex max-w-5xl flex-col items-center text-center">
-            <Image
-              src="/logo.png"
-              alt=""
-              width={72}
-              height={48}
-              className="animate-fade-in rounded-xl"
-              priority
-            />
-            <h1 className="text-hero-display mt-8 max-w-3xl animate-fade-in-up text-white">
-              Buy Roblox codes for{" "}
-              <span translate="no">Blox Fruit</span> and popular maps
+        <section className="home-hero tile-dark tile-section">
+          <div className="home-hero-shell mx-auto flex max-w-6xl flex-col items-center text-center">
+            <div className="home-hero-kicker animate-fade-in">
+              Owner-run digital code shop
+            </div>
+            <h1 className="home-hero-title animate-fade-in-up" translate="no">
+              Cozin
             </h1>
-            <p className="text-lead mt-5 max-w-xl animate-fade-in-up delay-1 text-[var(--text-muted-dark)]">
-              Browse products before logging in. Add Point with{" "}
-              <span translate="no">TrueMoney</span>, then buy game codes
-              instantly.
+            <p className="home-hero-subtitle animate-fade-in-up delay-1">
+              เลือกสินค้า เติม Point แล้วรับรหัสเกมอัตโนมัติในประวัติการซื้อ
             </p>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-4 animate-fade-in-up delay-2">
-              <Link href={topupHref} className="btn-pill-on-dark">
-                Add Point
-              </Link>
-              <Link href="/products" className="btn-pill-ghost border-white/30 text-white hover:bg-white/10">
-                View Products
-              </Link>
-            </div>
           </div>
         </section>
 
-        {/* ── Example Product Showcase (parchment) ── */}
-        <section className="tile-parchment tile-section">
-          <div className="mx-auto max-w-4xl">
-            <div className="text-center animate-fade-in-up">
-              <p className="text-caption text-[var(--muted-foreground)]">
-                Example product
-              </p>
-              <h2 className="text-display-lg mt-2">
-                <span translate="no">Captain</span>
-              </h2>
-              <p className="text-body mt-2 text-[var(--muted-foreground)]">
-                Map <span translate="no">Blox Fruit</span>
-              </p>
-            </div>
-            <div className="mx-auto mt-8 grid max-w-lg gap-4 sm:grid-cols-2 animate-fade-in-up delay-1">
-              <div className="utility-card text-center">
-                <p className="text-fine-print text-[var(--muted-foreground)]">
-                  Price
-                </p>
-                <p className="text-display-lg tabular-nums mt-2">
-                  10{" "}
-                  <span className="text-lead font-normal">Point</span>
-                </p>
-              </div>
-              <div className="utility-card text-center">
-                <p className="text-fine-print text-[var(--muted-foreground)]">
-                  Stock
-                </p>
-                <p className="text-display-lg tabular-nums mt-2">
-                  10
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── Featured Products (white) ── */}
         {featuredProducts.length > 0 ? (
           <section className="tile-light tile-section">
             <div className="mx-auto max-w-6xl">
@@ -98,12 +36,6 @@ export default async function Home() {
                   </p>
                   <h2 className="text-display-lg mt-1">Featured Products</h2>
                 </div>
-                <Link
-                  href="/products"
-                  className="btn-pill-ghost text-caption px-4 py-2"
-                >
-                  All Products
-                </Link>
               </div>
               <div className="mt-8 grid gap-5 md:grid-cols-3">
                 {featuredProducts.map((product) => (
@@ -114,7 +46,6 @@ export default async function Home() {
           </section>
         ) : null}
 
-        {/* ── Features Tile (dark) ── */}
         <section className="tile-dark-2 tile-section">
           <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-3">
             <div className="animate-fade-in-up">
@@ -166,7 +97,6 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* ── Footer (parchment) ── */}
         <footer className="tile-parchment py-10 text-center">
           <p className="text-fine-print text-[var(--muted-foreground)]">
             © {new Date().getFullYear()}{" "}
