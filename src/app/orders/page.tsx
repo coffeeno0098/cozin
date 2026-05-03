@@ -50,13 +50,10 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
         {/* ── Header (parchment) ── */}
         <section className="tile-parchment tile-section py-12">
           <div className="mx-auto max-w-4xl animate-fade-in-up">
-            <p className="text-caption text-[var(--muted-foreground)]">
-              <span translate="no">Cozin</span> Account
-            </p>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <h1 className="text-display-lg">Purchase History</h1>
+              <h1 className="text-display-lg">ประวัติการซื้อ</h1>
               <Link href="/products" className="btn-pill-ghost text-caption px-4 py-2">
-                Browse Products
+                เลือกดูสินค้า
               </Link>
             </div>
           </div>
@@ -68,16 +65,16 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
             <div aria-live="polite">
               {params?.success ? (
                 <div className="alert-success animate-fade-in">
-                  Purchase completed. Your code is available below.
+                  ซื้อสำเร็จแล้ว รหัสของคุณอยู่ด้านล่างนี้
                 </div>
               ) : null}
             </div>
 
             {orderRows.length === 0 ? (
               <div className="utility-card animate-fade-in-up">
-                <h2 className="text-body-strong">No Purchases Yet</h2>
+                <h2 className="text-body-strong">ยังไม่มีประวัติการซื้อ</h2>
                 <p className="text-caption mt-2 text-[var(--muted-foreground)]">
-                  Purchased codes will appear here.
+                  เมื่อซื้อสินค้าแล้ว รหัสเกมจะแสดงในหน้านี้
                 </p>
               </div>
             ) : (
@@ -100,7 +97,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
                       </p>
                     </div>
                     <div className="shrink-0 rounded-xl bg-[var(--surface-parchment)] px-4 py-2.5 text-right">
-                      <p className="text-fine-print text-[var(--muted-foreground)]">Paid</p>
+                      <p className="text-fine-print text-[var(--muted-foreground)]">จ่ายแล้ว</p>
                       <p className="text-body-strong tabular-nums">{order.pricePoints} Point</p>
                     </div>
                   </div>

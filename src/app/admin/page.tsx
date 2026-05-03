@@ -232,7 +232,7 @@ export default async function AdminPage() {
               ) : (
                 <div className="mt-5 space-y-3">
                   {dashboard.latestPayments.map((payment) => (
-                    <div key={payment.id} className="rounded-xl border border-[var(--hairline)] bg-white px-4 py-3">
+                    <div key={payment.id} className="rounded-xl border border-[var(--hairline)] bg-[var(--card)] px-4 py-3">
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
@@ -263,7 +263,7 @@ export default async function AdminPage() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="group rounded-xl border border-[var(--hairline)] bg-white px-4 py-3 transition-colors hover:bg-[var(--surface-parchment)]"
+                    className="group rounded-xl border border-[var(--hairline)] bg-[var(--card)] px-4 py-3 transition-colors hover:bg-[var(--surface-parchment)]"
                   >
                     <p className="text-caption-strong">{link.label}</p>
                     <p className="text-fine-print mt-1 text-[var(--muted-foreground)]">{link.description}</p>

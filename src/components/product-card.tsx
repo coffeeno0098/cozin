@@ -15,24 +15,27 @@ type ProductCardProps = {
 function getStockDisplay(availableCodes: number) {
   if (availableCodes === 0) {
     return {
-      label: "Out of stock",
-      countText: "0 left",
-      badgeClass: "badge-error",
+      label: "หมด",
+      countText: "0 ชิ้น",
+      badgeClass: "product-card-badge product-card-badge--error",
+      dotClass: "product-card-dot--error",
     };
   }
 
   if (availableCodes <= 2) {
     return {
-      label: "Low stock",
-      countText: `Only ${availableCodes} left`,
-      badgeClass: "badge-warning",
+      label: "เหลือน้อย",
+      countText: `เหลือ ${availableCodes} ชิ้น`,
+      badgeClass: "product-card-badge product-card-badge--warning",
+      dotClass: "product-card-dot--warning",
     };
   }
 
   return {
-    label: "In stock",
-    countText: `${availableCodes} left`,
-    badgeClass: "badge-success",
+    label: "มีสินค้า",
+    countText: `${availableCodes} ชิ้น`,
+    badgeClass: "product-card-badge product-card-badge--success",
+    dotClass: "product-card-dot--success",
   };
 }
 
@@ -41,61 +44,71 @@ export function ProductCard({ product }: ProductCardProps) {
   const stock = getStockDisplay(product.availableCodes);
 
   return (
-    <article className="utility-card group animate-scale-in overflow-hidden p-0">
-      {product.imageUrl ? (
-        <div className="aspect-[16/9] overflow-hidden border-b border-[var(--hairline)] bg-[var(--surface-parchment)]">
-          {/* eslint-disable-next-line @next/next/no-img-element -- Admin-provided image URLs can come from any domain. */}
+    <article className="product-card group animate-scale-in">
+      {/* ── Image Area ── */}
+      <div className="product-card-image-area">
+        {/* Map badge (top-left) */}
+        <span className="product-card-map-badge" translate="no">
+          {product.gameMap}
+        </span>
+
+        {/* Stock indicator (top-right) */}
+        <span className={`product-card-stock-pill ${stock.dotClass}`}>
+          <span className="product-card-stock-dot" />
+          {stock.countText}
+        </span>
+
+        {product.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- Admin-provided image URLs can come from any domain.
           <img
             src={product.imageUrl}
             alt={product.name}
             loading="lazy"
             referrerPolicy="no-referrer"
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            className="product-card-img"
           />
-        </div>
-      ) : null}
-
-      <div className="p-6">
-      {/* Header: map + stock */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="text-caption text-[var(--muted-foreground)]">
-            {product.gameMap}
-          </p>
-          <h2 className="text-body-strong mt-1.5 truncate">{product.name}</h2>
-        </div>
-        <span className={stock.badgeClass}>{stock.label}</span>
+        ) : (
+          <div className="product-card-img-placeholder">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1" opacity="0.25" />
+              <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" opacity="0.25" />
+              <path d="M3 16l5-5 4 4 3-3 6 6" stroke="currentColor" strokeWidth="1" opacity="0.25" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+        )}
       </div>
 
-      {/* Description */}
-      {product.description ? (
-        <p className="mt-3 text-caption leading-relaxed text-[var(--muted-foreground)] line-clamp-2">
-          {product.description}
-        </p>
-      ) : null}
-
-      {/* Price + stock count */}
-      <div className="mt-5 flex items-end justify-between border-t border-[var(--hairline)] pt-4">
-        <div>
-          <p className="text-fine-print text-[var(--muted-foreground)]">Price</p>
-          <p className="text-tagline tabular-nums mt-0.5">{product.pricePoints} <span className="text-caption font-normal">Point</span></p>
+      {/* ── Card Body ── */}
+      <div className="product-card-body">
+        {/* Stock badge */}
+        <div className="product-card-meta-row">
+          <span className={stock.badgeClass}>{stock.label}</span>
         </div>
-        <div className="text-right">
-          <p className="text-fine-print text-[var(--muted-foreground)]">Available</p>
-          <p className="text-body-strong tabular-nums mt-0.5">{stock.countText}</p>
-        </div>
-      </div>
 
-      {/* CTA */}
-      <Link
-        href={`/products/${product.slug}`}
-        className="mt-5 flex items-center justify-center gap-1.5 text-body text-[var(--primary)] transition-colors hover:text-[var(--primary-focus)]"
-      >
-        {isInStock ? "View Product" : "View Details"}
-        <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden="true" className="mt-px transition-transform group-hover:translate-x-0.5">
-          <path d="M1 1l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </Link>
+        {/* Product name */}
+        <h2 className="product-card-name">{product.name}</h2>
+
+        {/* Description (truncated) */}
+        {product.description ? (
+          <p className="product-card-desc">{product.description}</p>
+        ) : null}
+
+        {/* Price + CTA */}
+        <div className="product-card-footer">
+          <div className="product-card-price-block">
+            <span className="product-card-price-label">ราคา</span>
+            <span className="product-card-price-value">
+              {product.pricePoints} <span className="product-card-price-unit">Point</span>
+            </span>
+          </div>
+
+          <Link
+            href={`/products/${product.slug}`}
+            className="product-card-cta"
+          >
+            {isInStock ? "ซื้อเลย" : "ดูรายละเอียด"}
+          </Link>
+        </div>
       </div>
     </article>
   );

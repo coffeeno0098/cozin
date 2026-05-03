@@ -41,14 +41,11 @@ export default async function AccountPage() {
         {/* ── Header (parchment) ── */}
         <section className="tile-parchment tile-section py-12">
           <div className="mx-auto max-w-4xl animate-fade-in-up">
-            <p className="text-caption text-[var(--muted-foreground)]">
-              <span translate="no">Cozin</span> Account
-            </p>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <h1 className="text-hero-display">{user.username}</h1>
               <form action={logoutAction}>
                 <button type="submit" className="btn-pill-ghost text-caption px-4 py-2">
-                  Logout
+                  ออกจากระบบ
                 </button>
               </form>
             </div>
@@ -65,10 +62,10 @@ export default async function AccountPage() {
               </div>
               <div className="utility-card text-center">
                 <p className="text-fine-print text-[var(--muted-foreground)]">Email</p>
-                <p className="text-body-strong mt-3 break-all">{user.email ?? "Not set"}</p>
+                <p className="text-body-strong mt-3 break-all">{user.email ?? "ยังไม่ได้ตั้งค่า"}</p>
               </div>
               <div className="utility-card text-center">
-                <p className="text-fine-print text-[var(--muted-foreground)]">Role</p>
+                <p className="text-fine-print text-[var(--muted-foreground)]">สิทธิ์</p>
                 <p className="text-body-strong mt-3 capitalize">{user.role}</p>
               </div>
             </div>
@@ -76,24 +73,24 @@ export default async function AccountPage() {
             {/* ── Quick actions ── */}
             <div className="mt-8 grid gap-5 sm:grid-cols-2 animate-fade-in-up delay-2">
               <Link href="/topup" className="utility-card group block">
-                <h2 className="text-body-strong">Top Up Point</h2>
+                <h2 className="text-body-strong">เติม Point</h2>
                 <p className="text-caption mt-2 text-[var(--muted-foreground)]">
-                  Submit a <span translate="no">TrueMoney</span> gift link to add Point.
+                  ส่งลิงก์ซอง <span translate="no">TrueMoney</span> เพื่อเพิ่ม Point
                 </p>
                 <span className="text-caption mt-4 inline-flex items-center gap-1 text-[var(--primary)] transition-colors group-hover:text-[var(--primary-focus)]">
-                  Go to Top Up
+                  ไปหน้าเติม Point
                   <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden="true" className="transition-transform group-hover:translate-x-0.5">
                     <path d="M1 1l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </span>
               </Link>
               <Link href="/orders" className="utility-card group block">
-                <h2 className="text-body-strong">Purchase History</h2>
+                <h2 className="text-body-strong">ประวัติการซื้อ</h2>
                 <p className="text-caption mt-2 text-[var(--muted-foreground)]">
-                  View your purchased codes and delivery details.
+                  ดูรหัสที่ซื้อแล้วและรายละเอียดการส่ง
                 </p>
                 <span className="text-caption mt-4 inline-flex items-center gap-1 text-[var(--primary)] transition-colors group-hover:text-[var(--primary-focus)]">
-                  View History
+                  ดูประวัติ
                   <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden="true" className="transition-transform group-hover:translate-x-0.5">
                     <path d="M1 1l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>

@@ -41,7 +41,7 @@ export async function loginAction(formData: FormData) {
     await signIn("credentials", {
       username: parsed.data.username,
       password: parsed.data.password,
-      redirectTo: "/account",
+      redirectTo: "/",
     });
   } catch (error) {
     if (isRedirectError(error)) {

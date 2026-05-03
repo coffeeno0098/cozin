@@ -37,13 +37,13 @@ export function MapCard({ map }: MapCardProps) {
             </h2>
           </div>
           <span className={map.availableCodes > 0 ? "badge-success" : "badge-error"}>
-            {map.availableCodes > 0 ? "In stock" : "Out of stock"}
+            {map.availableCodes > 0 ? "มีสินค้า" : "สินค้าหมด"}
           </span>
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3 border-t border-[var(--hairline)] pt-4">
           <div>
-            <p className="text-fine-print text-[var(--muted-foreground)]">Products</p>
+            <p className="text-fine-print text-[var(--muted-foreground)]">สินค้า</p>
             <p className="text-tagline tabular-nums mt-0.5">{map.productCount}</p>
           </div>
           <div className="text-right">
@@ -53,7 +53,7 @@ export function MapCard({ map }: MapCardProps) {
         </div>
 
         <p className="mt-5 flex items-center justify-center gap-1.5 text-body text-[var(--primary)] transition-colors group-hover:text-[var(--primary-focus)]">
-          View Products
+          ดูสินค้า
           <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden="true" className="mt-px transition-transform group-hover:translate-x-0.5">
             <path d="M1 1l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>

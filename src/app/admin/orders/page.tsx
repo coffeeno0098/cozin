@@ -109,7 +109,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                     type="search"
                     defaultValue={query}
                     placeholder="Username, product, map, or delivered ID"
-                    className="mt-1 w-full rounded-xl border border-[var(--hairline)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--primary)]"
+                    className="mt-1 w-full rounded-xl border border-[var(--hairline)] bg-[var(--background)] px-4 py-2.5 text-sm text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted-foreground)] focus:border-[var(--primary)]"
                   />
                 </div>
                 {status ? <input type="hidden" name="status" value={status} /> : null}

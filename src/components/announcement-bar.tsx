@@ -18,9 +18,9 @@ export async function AnnouncementBar() {
   }
 
   return (
-    <div className="tile-parchment overflow-hidden border-b border-[var(--hairline)]">
-      <div className="cozin-marquee py-2.5 text-caption whitespace-nowrap">
-        <span className="px-4">{announcement.message}</span>
+    <div className="announcement-strip overflow-hidden">
+      <div className="cozin-marquee announcement-marquee whitespace-nowrap">
+        <span className="px-8">{announcement.message}</span>
       </div>
     </div>
   );
