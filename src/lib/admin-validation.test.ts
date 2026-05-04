@@ -6,6 +6,7 @@ import {
   productFormSchema,
   toggleAnnouncementFormSchema,
   updateMapImageFormSchema,
+  updateProductFormSchema,
 } from "@/lib/admin-validation";
 
 describe("productFormSchema", () => {
@@ -64,6 +65,49 @@ describe("productFormSchema", () => {
     if (parsed.success) {
       expect(parsed.data.newMapImageUrl).toBe("https://example.com/map.png");
     }
+  });
+});
+
+describe("updateProductFormSchema", () => {
+  const baseUpdate = {
+    productId: "3a6c545c-6672-4ab8-b87c-e1ff7ee1bd17",
+    name: "Captain V2",
+    description: "",
+    pricePoints: "20",
+    imageUrl: "",
+    isActive: "on",
+  };
+
+  it("accepts product updates with an optional image URL", () => {
+    const parsed = updateProductFormSchema.safeParse({
+      ...baseUpdate,
+      imageUrl: "https://example.com/product-v2.png",
+    });
+
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.imageUrl).toBe("https://example.com/product-v2.png");
+      expect(parsed.data.pricePoints).toBe(20);
+      expect(parsed.data.isActive).toBe(true);
+    }
+  });
+
+  it("normalizes an empty product image URL to null", () => {
+    const parsed = updateProductFormSchema.safeParse(baseUpdate);
+
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.imageUrl).toBeNull();
+    }
+  });
+
+  it("rejects invalid product update image URLs", () => {
+    expect(
+      updateProductFormSchema.safeParse({
+        ...baseUpdate,
+        imageUrl: "not-a-url",
+      }).success,
+    ).toBe(false);
   });
 });
 

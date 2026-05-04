@@ -1,6 +1,12 @@
 import { asc, count, eq, sql } from "drizzle-orm";
 
-import { createProductAction, deleteMapAction, toggleProductAction, updateMapImageAction } from "@/app/admin/actions";
+import {
+  createMapAction,
+  createProductAction,
+  deleteMapAction,
+  updateMapImageAction,
+  updateProductAction,
+} from "@/app/admin/actions";
 import { SiteNav } from "@/components/site-nav";
 import { db } from "@/db";
 import { gameCodes, gameMaps, products } from "@/db/schema";
@@ -10,6 +16,7 @@ type ProductsPageProps = {
   searchParams?: Promise<{
     created?: string;
     updated?: string;
+    mapCreated?: string;
     mapUpdated?: string;
     mapDeleted?: string;
     error?: string;
@@ -19,9 +26,20 @@ type ProductsPageProps = {
 export const dynamic = "force-dynamic";
 
 function getStockBadge(availableCodes: number) {
-  if (availableCodes === 0) return { label: "Out of stock", badgeClass: "badge-error" };
-  if (availableCodes <= 2) return { label: "Low stock", badgeClass: "badge-warning" };
-  return { label: "In stock", badgeClass: "badge-success" };
+  if (availableCodes === 0) return { label: "สินค้าหมด", badgeClass: "badge-error" };
+  if (availableCodes <= 2) return { label: "เหลือน้อย", badgeClass: "badge-warning" };
+  return { label: "มีสินค้า", badgeClass: "badge-success" };
+}
+
+function getErrorMessage(error?: string) {
+  if (error === "map-in-use") return "Map นี้ยังมีสินค้าใช้งานอยู่";
+  if (error === "invalid-map-image") return "กรุณากรอก URL รูปภาพ Map ให้ถูกต้อง";
+  if (error === "invalid-map") return "กรุณากรอกชื่อ Map และ URL รูปภาพให้ถูกต้อง";
+  if (error === "duplicate-map") return "มี Map ชื่อนี้อยู่แล้ว";
+  if (error === "map") return "กรุณาเลือก Map ก่อนสร้างสินค้า";
+  if (error === "invalid-product") return "กรุณาตรวจสอบข้อมูลสินค้า";
+  if (error === "product-not-found") return "ไม่พบสินค้าที่ต้องการแก้ไข";
+  return "กรุณาตรวจสอบข้อมูลในฟอร์ม";
 }
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
@@ -68,218 +86,268 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       <main id="main-content" className="flex-1">
         <section className="tile-parchment tile-section py-12">
           <div className="mx-auto max-w-6xl animate-fade-in-up">
-            <p className="text-caption text-[var(--muted-foreground)]"><span translate="no">Cozin</span> Admin</p>
-            <h1 className="text-display-lg mt-1">Products</h1>
-            <p className="text-body mt-1 text-[var(--muted-foreground)]">Create products and control product visibility.</p>
+            <p className="text-caption text-[var(--muted-foreground)]">
+              <span translate="no">Cozin</span> Admin
+            </p>
+            <h1 className="text-display-lg mt-1">สินค้าและ Map</h1>
+            <p className="text-body mt-1 text-[var(--muted-foreground)]">
+              แยกการสร้างสินค้าและการสร้าง Map ให้ใช้งานง่ายขึ้น
+            </p>
           </div>
         </section>
 
         <section className="tile-light tile-section">
           <div className="mx-auto max-w-6xl">
             <div aria-live="polite" className="space-y-3 mb-8">
-              {params?.created ? <div className="alert-success">Product created.</div> : null}
-              {params?.updated ? <div className="alert-success">Product updated.</div> : null}
-              {params?.mapUpdated ? <div className="alert-success">Map image updated.</div> : null}
-              {params?.mapDeleted ? <div className="alert-success">Map deleted.</div> : null}
-              {params?.error ? (
-                <div className="alert-error">
-                  {params.error === "map-in-use" ? "This map is still used by products."
-                    : params.error === "invalid-map-image" ? "Please enter a valid map image URL."
-                    : params.error === "map" ? "Please select or create a map."
-                    : "Please check the product form."}
-                </div>
-              ) : null}
+              {params?.created ? <div className="alert-success">สร้างสินค้าแล้ว</div> : null}
+              {params?.updated ? <div className="alert-success">อัปเดตสินค้าแล้ว</div> : null}
+              {params?.mapCreated ? <div className="alert-success">สร้าง Map แล้ว</div> : null}
+              {params?.mapUpdated ? <div className="alert-success">อัปเดตรูป Map แล้ว</div> : null}
+              {params?.mapDeleted ? <div className="alert-success">ลบ Map แล้ว</div> : null}
+              {params?.error ? <div className="alert-error">{getErrorMessage(params.error)}</div> : null}
             </div>
 
-            <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
-              {/* ── Add product form ── */}
-              <form action={createProductAction} className="utility-card space-y-4 animate-fade-in-up">
+            <div className="space-y-10">
+              <section className="space-y-5">
                 <div>
-                  <h2 className="text-body-strong">Add Product</h2>
-                  <p className="text-caption mt-1 text-[var(--muted-foreground)]">Example: Captain, Blox Fruit, 10 Point.</p>
+                  <p className="text-caption text-[var(--muted-foreground)]">ส่วนที่ใช้บ่อย</p>
+                  <h2 className="text-display-lg mt-1">สร้างสินค้าใหม่</h2>
                 </div>
-                <label className="block space-y-2">
-                  <span className="text-caption-strong">Product Name</span>
-                  <input name="name" required spellCheck={false} className="input-apple" />
-                </label>
-                <label className="block space-y-2">
-                  <span className="text-caption-strong">Existing Map</span>
-                  <select name="mapId" className="input-apple">
-                    <option value="">Create or choose map</option>
-                    {mapRows.map((map) => (
-                      <option key={map.id} value={map.id}>{map.name}</option>
-                    ))}
-                  </select>
-                </label>
-                <label className="block space-y-2">
-                  <span className="text-caption-strong">New Map</span>
-                  <input name="newMapName" placeholder="Blox Fruit" spellCheck={false} className="input-apple" />
-                  <span className="text-fine-print text-[var(--muted-foreground)]">
-                    Leave empty when choosing an existing map. A new name here creates a map automatically.
-                  </span>
-                </label>
-                <label className="block space-y-2">
-                  <span className="text-caption-strong">New Map Image URL</span>
-                  <input
-                    name="newMapImageUrl"
-                    type="url"
-                    placeholder="https://example.com/map.png"
-                    spellCheck={false}
-                    className="input-apple"
-                  />
-                  <span className="text-fine-print text-[var(--muted-foreground)]">
-                    Optional. Used when creating a new map from this form.
-                  </span>
-                </label>
-                <label className="block space-y-2">
-                  <span className="text-caption-strong">Price Point</span>
-                  <input name="pricePoints" type="number" min={1} required className="input-apple" />
-                </label>
-                <label className="block space-y-2">
-                  <span className="text-caption-strong">Image URL</span>
-                  <input
-                    name="imageUrl"
-                    type="url"
-                    placeholder="https://example.com/product.png"
-                    spellCheck={false}
-                    className="input-apple"
-                  />
-                  <span className="text-fine-print text-[var(--muted-foreground)]">
-                    Optional. Paste a direct image URL to show it on product cards.
-                  </span>
-                </label>
-                <label className="block space-y-2">
-                  <span className="text-caption-strong">Description</span>
-                  <textarea name="description" className="textarea-apple" />
-                </label>
-                <label className="flex items-center gap-2 text-caption">
-                  <input name="isActive" type="checkbox" defaultChecked className="size-4 accent-[var(--primary)]" />
-                  Active
-                </label>
-                <button type="submit" className="btn-pill w-full">Add Product</button>
-              </form>
 
-              {/* ── Maps + Product list ── */}
-              <div className="space-y-5">
-                <div className="utility-card animate-fade-in-up delay-1">
-                  <h2 className="text-body-strong">Maps</h2>
-                  <p className="text-caption mt-1 text-[var(--muted-foreground)]">Delete maps only when no product is using them.</p>
-                  <div className="mt-4 grid gap-3">
-                    {mapRows.length === 0 ? (
-                      <p className="text-caption text-[var(--muted-foreground)]">No maps yet.</p>
-                    ) : (
-                      mapRows.map((map) => (
-                        <div key={map.id} className="rounded-2xl border border-[var(--hairline)] bg-[var(--surface-parchment)] p-3">
-                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                            {map.imageUrl ? (
-                              <div className="aspect-[16/9] w-full overflow-hidden rounded-xl border border-[var(--hairline)] bg-[var(--background)] sm:w-28">
-                                {/* eslint-disable-next-line @next/next/no-img-element -- Admin-provided image URLs can come from any domain. */}
-                                <img
-                                  src={map.imageUrl}
-                                  alt={map.name}
-                                  loading="lazy"
-                                  referrerPolicy="no-referrer"
-                                  className="h-full w-full object-cover"
-                                />
-                              </div>
-                            ) : null}
+                <form action={createProductAction} className="utility-card grid gap-5 animate-fade-in-up lg:grid-cols-2">
+                  <div className="space-y-4">
+                    <label className="block space-y-2">
+                      <span className="text-caption-strong">ชื่อสินค้า</span>
+                      <input name="name" required spellCheck={false} className="input-apple" />
+                    </label>
+                    <label className="block space-y-2">
+                      <span className="text-caption-strong">เลือก Map</span>
+                      <select name="mapId" required className="input-apple">
+                        <option value="">เลือก Map สำหรับสินค้านี้</option>
+                        {mapRows.map((map) => (
+                          <option key={map.id} value={map.id}>{map.name}</option>
+                        ))}
+                      </select>
+                      <span className="text-fine-print text-[var(--muted-foreground)]">
+                        ถ้ายังไม่มี Map ให้สร้างจากส่วนด้านล่างก่อน
+                      </span>
+                    </label>
+                    <label className="block space-y-2">
+                      <span className="text-caption-strong">ราคา Point</span>
+                      <input name="pricePoints" type="number" min={1} required className="input-apple" />
+                    </label>
+                    <label className="flex items-center gap-2 text-caption">
+                      <input name="isActive" type="checkbox" defaultChecked className="size-4 accent-[var(--primary)]" />
+                      เปิดขายทันที
+                    </label>
+                  </div>
+
+                  <div className="space-y-4">
+                    <label className="block space-y-2">
+                      <span className="text-caption-strong">รูปสินค้า URL</span>
+                      <input
+                        name="imageUrl"
+                        type="url"
+                        placeholder="https://example.com/product.png"
+                        spellCheck={false}
+                        className="input-apple"
+                      />
+                    </label>
+                    <label className="block space-y-2">
+                      <span className="text-caption-strong">รายละเอียดสินค้า</span>
+                      <textarea name="description" className="textarea-apple min-h-36" />
+                    </label>
+                    <button type="submit" className="btn-pill w-full">สร้างสินค้า</button>
+                  </div>
+                </form>
+
+                {productRows.length === 0 ? (
+                  <div className="utility-card text-caption text-[var(--muted-foreground)]">ยังไม่มีสินค้า</div>
+                ) : (
+                  <div className="grid gap-5">
+                    {productRows.map((product, i) => {
+                      const stockBadge = getStockBadge(product.availableCodes);
+                      return (
+                        <div key={product.id} className={`utility-card animate-fade-in-up ${i < 5 ? `delay-${i + 1}` : ""}`}>
+                          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                             <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2 text-caption">
-                                <span className="font-medium" translate="no">{map.name}</span>
-                                <span className="text-[var(--muted-foreground)] tabular-nums">({map.productCount})</span>
+                              {product.imageUrl ? (
+                                <div className="mb-4 aspect-[16/9] max-w-sm overflow-hidden rounded-xl border border-[var(--hairline)] bg-[var(--surface-parchment)]">
+                                  {/* eslint-disable-next-line @next/next/no-img-element -- Admin-provided image URLs can come from any domain. */}
+                                  <img
+                                    src={product.imageUrl}
+                                    alt={product.name}
+                                    loading="lazy"
+                                    referrerPolicy="no-referrer"
+                                    className="h-full w-full object-cover"
+                                  />
+                                </div>
+                              ) : null}
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h3 className="text-body-strong truncate">{product.name}</h3>
+                                <span className={product.isActive ? "badge-success" : "badge-neutral"}>
+                                  {product.isActive ? "เปิดขาย" : "ซ่อนอยู่"}
+                                </span>
+                                <span className={stockBadge.badgeClass}>{stockBadge.label}</span>
                               </div>
-                              <form action={updateMapImageAction} className="mt-2 flex flex-col gap-2 sm:flex-row">
-                                <input type="hidden" name="mapId" value={map.id} />
+                              <p className="text-caption mt-1 text-[var(--muted-foreground)]">{product.gameMap}</p>
+                              {product.description ? (
+                                <p className="text-caption mt-2 text-[var(--muted-foreground)] line-clamp-2">{product.description}</p>
+                              ) : null}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 lg:min-w-64">
+                              <div className="rounded-xl border border-[var(--hairline)] px-3 py-2 text-center">
+                                <p className="text-fine-print text-[var(--muted-foreground)]">ราคา</p>
+                                <p className="text-body-strong tabular-nums">{product.pricePoints}</p>
+                              </div>
+                              <div className="rounded-xl border border-[var(--hairline)] px-3 py-2 text-center">
+                                <p className="text-fine-print text-[var(--muted-foreground)]">พร้อมขาย</p>
+                                <p className="text-body-strong tabular-nums">{product.availableCodes}</p>
+                              </div>
+                              <div className="rounded-xl border border-[var(--hairline)] px-3 py-2 text-center">
+                                <p className="text-fine-print text-[var(--muted-foreground)]">ขายแล้ว</p>
+                                <p className="text-body-strong tabular-nums">{product.soldCodes}</p>
+                              </div>
+                              <div className="rounded-xl border border-[var(--hairline)] px-3 py-2 text-center">
+                                <p className="text-fine-print text-[var(--muted-foreground)]">กันไว้ / ทั้งหมด</p>
+                                <p className="text-body-strong tabular-nums">{product.reservedCodes} / {product.totalCodes}</p>
+                              </div>
+                            </div>
+                          </div>
+                          <form action={updateProductAction} className="mt-5 border-t border-[var(--hairline)] pt-5">
+                            <input type="hidden" name="productId" value={product.id} />
+                            <div className="grid gap-4 lg:grid-cols-2">
+                              <label className="block space-y-2">
+                                <span className="text-caption-strong">ชื่อสินค้า</span>
+                                <input name="name" defaultValue={product.name} required spellCheck={false} className="input-apple" />
+                              </label>
+                              <label className="block space-y-2">
+                                <span className="text-caption-strong">ราคา Point</span>
+                                <input name="pricePoints" type="number" min={1} defaultValue={product.pricePoints} required className="input-apple" />
+                              </label>
+                              <label className="block space-y-2 lg:col-span-2">
+                                <span className="text-caption-strong">รูปสินค้า URL</span>
                                 <input
                                   name="imageUrl"
                                   type="url"
-                                  defaultValue={map.imageUrl ?? ""}
-                                  placeholder="Map image URL"
+                                  defaultValue={product.imageUrl ?? ""}
+                                  placeholder="https://example.com/product.png"
                                   spellCheck={false}
-                                  className="input-apple min-h-10 text-caption sm:flex-1"
+                                  className="input-apple"
                                 />
-                                <button type="submit" className="btn-pill-ghost px-4 py-2 text-caption">
-                                  Save
+                              </label>
+                              <label className="block space-y-2 lg:col-span-2">
+                                <span className="text-caption-strong">รายละเอียดสินค้า</span>
+                                <textarea name="description" defaultValue={product.description ?? ""} className="textarea-apple min-h-28" />
+                              </label>
+                            </div>
+                            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                              <label className="flex items-center gap-2 text-caption">
+                                <input name="isActive" type="checkbox" defaultChecked={product.isActive} className="size-4 accent-[var(--primary)]" />
+                                เปิดขาย
+                              </label>
+                              <button type="submit" className="btn-pill px-6 py-2 text-caption">
+                                บันทึกสินค้า
+                              </button>
+                            </div>
+                          </form>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+
+              <section className="space-y-5">
+                <div>
+                  <p className="text-caption text-[var(--muted-foreground)]">ตั้งค่าหมวดสินค้า</p>
+                  <h2 className="text-display-lg mt-1">สร้างและจัดการ Map</h2>
+                </div>
+
+                <div className="grid gap-5 lg:grid-cols-[0.85fr_1.15fr]">
+                  <form action={createMapAction} className="utility-card space-y-4 animate-fade-in-up">
+                    <div>
+                      <h3 className="text-body-strong">สร้าง Map ใหม่</h3>
+                      <p className="text-caption mt-1 text-[var(--muted-foreground)]">
+                        สร้างครั้งเดียว แล้วนำไปเลือกตอนสร้างสินค้า
+                      </p>
+                    </div>
+                    <label className="block space-y-2">
+                      <span className="text-caption-strong">ชื่อ Map</span>
+                      <input name="name" required placeholder="Blox Fruit" spellCheck={false} className="input-apple" />
+                    </label>
+                    <label className="block space-y-2">
+                      <span className="text-caption-strong">รูป Map URL</span>
+                      <input
+                        name="imageUrl"
+                        type="url"
+                        placeholder="https://example.com/map.png"
+                        spellCheck={false}
+                        className="input-apple"
+                      />
+                    </label>
+                    <button type="submit" className="btn-pill w-full">สร้าง Map</button>
+                  </form>
+
+                  <div className="utility-card animate-fade-in-up delay-1">
+                    <h3 className="text-body-strong">Map ทั้งหมด</h3>
+                    <p className="text-caption mt-1 text-[var(--muted-foreground)]">
+                      ลบ Map ได้เฉพาะตอนที่ยังไม่มีสินค้าใช้งาน
+                    </p>
+                    <div className="mt-4 grid gap-3">
+                      {mapRows.length === 0 ? (
+                        <p className="text-caption text-[var(--muted-foreground)]">ยังไม่มี Map</p>
+                      ) : (
+                        mapRows.map((map) => (
+                          <div key={map.id} className="rounded-2xl border border-[var(--hairline)] bg-[var(--surface-parchment)] p-3">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                              {map.imageUrl ? (
+                                <div className="aspect-[16/9] w-full overflow-hidden rounded-xl border border-[var(--hairline)] bg-[var(--background)] sm:w-28">
+                                  {/* eslint-disable-next-line @next/next/no-img-element -- Admin-provided image URLs can come from any domain. */}
+                                  <img
+                                    src={map.imageUrl}
+                                    alt={map.name}
+                                    loading="lazy"
+                                    referrerPolicy="no-referrer"
+                                    className="h-full w-full object-cover"
+                                  />
+                                </div>
+                              ) : null}
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 text-caption">
+                                  <span className="font-medium" translate="no">{map.name}</span>
+                                  <span className="text-[var(--muted-foreground)] tabular-nums">({map.productCount})</span>
+                                </div>
+                                <form action={updateMapImageAction} className="mt-2 flex flex-col gap-2 sm:flex-row">
+                                  <input type="hidden" name="mapId" value={map.id} />
+                                  <input
+                                    name="imageUrl"
+                                    type="url"
+                                    defaultValue={map.imageUrl ?? ""}
+                                    placeholder="Map image URL"
+                                    spellCheck={false}
+                                    className="input-apple min-h-10 text-caption sm:flex-1"
+                                  />
+                                  <button type="submit" className="btn-pill-ghost px-4 py-2 text-caption">
+                                    บันทึก
+                                  </button>
+                                </form>
+                              </div>
+                              <form action={deleteMapAction}>
+                                <input type="hidden" name="mapId" value={map.id} />
+                                <button type="submit" disabled={map.productCount > 0} className="text-fine-print text-[var(--primary)] disabled:text-[var(--muted-foreground)] disabled:cursor-not-allowed hover:underline">
+                                  ลบ
                                 </button>
                               </form>
                             </div>
-                            <form action={deleteMapAction}>
-                              <input type="hidden" name="mapId" value={map.id} />
-                              <button type="submit" disabled={map.productCount > 0} className="text-fine-print text-[var(--primary)] disabled:text-[var(--muted-foreground)] disabled:cursor-not-allowed hover:underline">
-                                Delete
-                              </button>
-                            </form>
                           </div>
-                        </div>
-                      ))
-                    )}
+                        ))
+                      )}
+                    </div>
                   </div>
                 </div>
-
-                {productRows.length === 0 ? (
-                  <div className="utility-card text-caption text-[var(--muted-foreground)]">No products yet.</div>
-                ) : (
-                  productRows.map((product, i) => {
-                    const stockBadge = getStockBadge(product.availableCodes);
-                    return (
-                      <div key={product.id} className={`utility-card animate-fade-in-up ${i < 5 ? `delay-${i + 2}` : ""}`}>
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                          <div className="min-w-0 flex-1">
-                            {product.imageUrl ? (
-                              <div className="mb-4 aspect-[16/9] max-w-sm overflow-hidden rounded-xl border border-[var(--hairline)] bg-[var(--surface-parchment)]">
-                                {/* eslint-disable-next-line @next/next/no-img-element -- Admin-provided image URLs can come from any domain. */}
-                                <img
-                                  src={product.imageUrl}
-                                  alt={product.name}
-                                  loading="lazy"
-                                  referrerPolicy="no-referrer"
-                                  className="h-full w-full object-cover"
-                                />
-                              </div>
-                            ) : null}
-                            <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="text-body-strong truncate">{product.name}</h3>
-                              <span className={product.isActive ? "badge-success" : "badge-neutral"}>
-                                {product.isActive ? "Active" : "Hidden"}
-                              </span>
-                              <span className={stockBadge.badgeClass}>{stockBadge.label}</span>
-                            </div>
-                            <p className="text-caption mt-1 text-[var(--muted-foreground)]">{product.gameMap}</p>
-                            {product.description ? (
-                              <p className="text-caption mt-2 text-[var(--muted-foreground)] line-clamp-2">{product.description}</p>
-                            ) : null}
-                          </div>
-                          <div className="grid grid-cols-2 gap-2 sm:min-w-56">
-                            <div className="rounded-xl border border-[var(--hairline)] px-3 py-2 text-center">
-                              <p className="text-fine-print text-[var(--muted-foreground)]">Price</p>
-                              <p className="text-body-strong tabular-nums">{product.pricePoints}</p>
-                            </div>
-                            <div className="rounded-xl border border-[var(--hairline)] px-3 py-2 text-center">
-                              <p className="text-fine-print text-[var(--muted-foreground)]">Available</p>
-                              <p className="text-body-strong tabular-nums">{product.availableCodes}</p>
-                            </div>
-                            <div className="rounded-xl border border-[var(--hairline)] px-3 py-2 text-center">
-                              <p className="text-fine-print text-[var(--muted-foreground)]">Sold</p>
-                              <p className="text-body-strong tabular-nums">{product.soldCodes}</p>
-                            </div>
-                            <div className="rounded-xl border border-[var(--hairline)] px-3 py-2 text-center">
-                              <p className="text-fine-print text-[var(--muted-foreground)]">Rsv / Total</p>
-                              <p className="text-body-strong tabular-nums">{product.reservedCodes} / {product.totalCodes}</p>
-                            </div>
-                          </div>
-                        </div>
-                        <form action={toggleProductAction} className="mt-4">
-                          <input type="hidden" name="productId" value={product.id} />
-                          <input type="hidden" name="isActive" value={String(!product.isActive)} />
-                          <button type="submit" className="btn-pill-ghost text-caption px-4 py-2">
-                            {product.isActive ? "Hide Product" : "Show Product"}
-                          </button>
-                        </form>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
+              </section>
             </div>
           </div>
         </section>

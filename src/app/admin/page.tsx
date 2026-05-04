@@ -37,45 +37,51 @@ export default async function AdminPage() {
 
   const stats = [
     {
-      label: "Sales",
+      iconKey: "Sales",
+      label: "ยอดขาย",
       value: `${dashboard.salesSummary.totalSalesPoints} Point`,
-      detail: "Fulfilled order value",
+      detail: "มูลค่าออเดอร์ที่สำเร็จแล้ว",
     },
     {
-      label: "Orders",
+      iconKey: "Orders",
+      label: "ออเดอร์",
       value: dashboard.salesSummary.orderCount,
-      detail: "Total purchases",
+      detail: "จำนวนการซื้อทั้งหมด",
     },
     {
-      label: "Topups",
+      iconKey: "Topups",
+      label: "เติมเงิน",
       value: `${dashboard.paymentSummary.verifiedTopupPoints} Point`,
-      detail: `${dashboard.paymentSummary.verifiedTopupBaht} THB verified`,
+      detail: `ยืนยันแล้ว ${dashboard.paymentSummary.verifiedTopupBaht} บาท`,
     },
     {
-      label: "Pending",
+      iconKey: "Pending",
+      label: "รอตรวจสอบ",
       value: dashboard.paymentSummary.pendingPaymentCount,
-      detail: "Top-ups awaiting result",
+      detail: "รายการเติมเงินที่ยังรอผล",
     },
     {
-      label: "Products",
+      iconKey: "Products",
+      label: "สินค้า",
       value: dashboard.productSummary.activeProductCount,
-      detail: `${dashboard.productSummary.totalProductCount} total products`,
+      detail: `ทั้งหมด ${dashboard.productSummary.totalProductCount} รายการ`,
     },
     {
+      iconKey: "Stock",
       label: "Stock",
       value: dashboard.stockSummary.availableCodes,
-      detail: `${dashboard.stockSummary.soldCodes} sold, ${dashboard.stockSummary.reservedCodes} reserved`,
+      detail: `ขายแล้ว ${dashboard.stockSummary.soldCodes}, จองไว้ ${dashboard.stockSummary.reservedCodes}`,
     },
   ];
 
   const adminLinks = [
-    { label: "Products", description: "Add products, prices, maps, and visibility.", href: "/admin/products", primary: true },
-    { label: "Game-Code Stock", description: "Add ID and password pairs ready for sale.", href: "/admin/codes", primary: true },
-    { label: "Orders", description: "Review fulfilled purchases and delivered credentials.", href: "/admin/orders", primary: false },
-    { label: "Payments", description: "Review TrueMoney top-ups and failed payment reasons.", href: "/admin/payments", primary: false },
-    { label: "Users", description: "Review balances and apply audited Point adjustments.", href: "/admin/users", primary: false },
-    { label: "Announcements", description: "Publish a scrolling customer announcement.", href: "/admin/announcements", primary: false },
-    { label: "Audit Logs", description: "Review important admin actions.", href: "/admin/audit-logs", primary: false },
+    { label: "สินค้า", description: "เพิ่มสินค้า ตั้งราคา จัดการ Map และการแสดงผล", href: "/admin/products", primary: true },
+    { label: "Stock รหัสเกม", description: "เพิ่มคู่ ID และ Password ที่พร้อมขาย", href: "/admin/codes", primary: true },
+    { label: "ออเดอร์", description: "ตรวจสอบรายการซื้อและรหัสที่ส่งให้ลูกค้า", href: "/admin/orders", primary: false },
+    { label: "การชำระเงิน", description: "ตรวจสอบการเติมเงิน TrueMoney และสาเหตุที่ล้มเหลว", href: "/admin/payments", primary: false },
+    { label: "ผู้ใช้", description: "ตรวจสอบยอด Point และปรับยอดแบบมีประวัติ audit", href: "/admin/users", primary: false },
+    { label: "ประกาศ", description: "เผยแพร่แถบประกาศเลื่อนสำหรับลูกค้า", href: "/admin/announcements", primary: false },
+    { label: "Audit Logs", description: "ตรวจสอบประวัติการทำงานสำคัญของ admin", href: "/admin/audit-logs", primary: false },
   ];
 
   return (
@@ -90,17 +96,17 @@ export default async function AdminPage() {
             </p>
             <div className="mt-1 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <h1 className="text-hero-display text-white">Store Dashboard</h1>
+                <h1 className="text-hero-display text-white">แดชบอร์ดร้าน</h1>
                 <p className="text-body mt-2 text-[var(--text-muted-dark)]">
-                  Signed in as {currentUser.username}
+                  เข้าสู่ระบบในชื่อ {currentUser.username}
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
                 <Link href="/admin/codes" className="btn-pill-on-dark text-caption px-4 py-2">
-                  Add Stock
+                  เพิ่ม Stock
                 </Link>
                 <Link href="/admin/products" className="btn-pill-ghost border-white/30 text-caption text-white hover:bg-white/10">
-                  Manage Products
+                  จัดการสินค้า
                 </Link>
               </div>
             </div>
@@ -116,7 +122,7 @@ export default async function AdminPage() {
                   className={`utility-card animate-fade-in-up ${i < 6 ? `delay-${i + 1}` : ""}`}
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-[var(--muted-foreground)]">
-                    <path d={statIcons[stat.label]} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d={statIcons[stat.iconKey]} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                   <p className="text-fine-print mt-3 text-[var(--muted-foreground)]">{stat.label}</p>
                   <p className="text-tagline tabular-nums mt-1">{stat.value}</p>
@@ -129,21 +135,21 @@ export default async function AdminPage() {
               <section className="utility-card animate-fade-in-up">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-body-strong">Low Stock</h2>
+                    <h2 className="text-body-strong">Stock ใกล้หมด</h2>
                     <p className="text-caption mt-1 text-[var(--muted-foreground)]">
-                      Active products with 5 or fewer available codes.
+                      สินค้าที่เปิดขายและเหลือรหัสไม่เกิน 5 ชิ้น
                     </p>
                   </div>
                   <Link href="/admin/codes" className="text-caption text-[var(--primary)] hover:underline underline-offset-4">
-                    Add Codes
+                    เพิ่มรหัส
                   </Link>
                 </div>
 
                 {dashboard.lowStockProducts.length === 0 ? (
                   <div className="mt-5 rounded-xl border border-[var(--hairline)] bg-[var(--surface-parchment)] px-4 py-3">
-                    <p className="text-caption-strong">Stock looks healthy</p>
+                    <p className="text-caption-strong">Stock ยังเพียงพอ</p>
                     <p className="text-caption mt-1 text-[var(--muted-foreground)]">
-                      No active products are at or below the low-stock threshold.
+                      ยังไม่มีสินค้าที่อยู่ในเกณฑ์ใกล้หมด
                     </p>
                   </div>
                 ) : (
@@ -160,10 +166,10 @@ export default async function AdminPage() {
                         </div>
                         <div className="shrink-0 text-right">
                           <span className={getStockBadgeClass(product.stockStatus)}>
-                            {product.stockStatus === "out" ? "Out" : "Low"}
+                            {product.stockStatus === "out" ? "หมด" : "เหลือน้อย"}
                           </span>
                           <p className="text-fine-print tabular-nums mt-1 text-[var(--muted-foreground)]">
-                            {product.availableCodes} left
+                            เหลือ {product.availableCodes}
                           </p>
                         </div>
                       </Link>
@@ -175,18 +181,18 @@ export default async function AdminPage() {
               <section className="utility-card animate-fade-in-up delay-1">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-body-strong">Latest Orders</h2>
+                    <h2 className="text-body-strong">ออเดอร์ล่าสุด</h2>
                     <p className="text-caption mt-1 text-[var(--muted-foreground)]">
-                      Most recent purchases.
+                      รายการซื้อที่เกิดขึ้นล่าสุด
                     </p>
                   </div>
                   <Link href="/admin/orders" className="text-caption text-[var(--primary)] hover:underline underline-offset-4">
-                    View All
+                    ดูทั้งหมด
                   </Link>
                 </div>
 
                 {dashboard.latestOrders.length === 0 ? (
-                  <p className="text-caption mt-5 text-[var(--muted-foreground)]">No orders yet.</p>
+                  <p className="text-caption mt-5 text-[var(--muted-foreground)]">ยังไม่มีออเดอร์</p>
                 ) : (
                   <div className="mt-5 space-y-3">
                     {dashboard.latestOrders.map((order) => (
@@ -217,18 +223,18 @@ export default async function AdminPage() {
             <section className="utility-card animate-fade-in-up">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-body-strong">Latest Payments</h2>
+                  <h2 className="text-body-strong">การชำระเงินล่าสุด</h2>
                   <p className="text-caption mt-1 text-[var(--muted-foreground)]">
-                    Recent TrueMoney top-up attempts.
+                    รายการเติมเงิน TrueMoney ล่าสุด
                   </p>
                 </div>
                 <Link href="/admin/payments" className="text-caption text-[var(--primary)] hover:underline underline-offset-4">
-                  View All
+                  ดูทั้งหมด
                 </Link>
               </div>
 
               {dashboard.latestPayments.length === 0 ? (
-                <p className="text-caption mt-5 text-[var(--muted-foreground)]">No payments yet.</p>
+                <p className="text-caption mt-5 text-[var(--muted-foreground)]">ยังไม่มีรายการชำระเงิน</p>
               ) : (
                 <div className="mt-5 space-y-3">
                   {dashboard.latestPayments.map((payment) => (
@@ -254,9 +260,9 @@ export default async function AdminPage() {
             </section>
 
             <section className="utility-card animate-fade-in-up delay-1">
-              <h2 className="text-body-strong">Admin Shortcuts</h2>
+              <h2 className="text-body-strong">เมนูลัด Admin</h2>
               <p className="text-caption mt-1 text-[var(--muted-foreground)]">
-                Common operating areas for running the store.
+                เมนูที่ใช้บ่อยสำหรับดูแลร้าน
               </p>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 {adminLinks.map((link) => (
@@ -268,7 +274,7 @@ export default async function AdminPage() {
                     <p className="text-caption-strong">{link.label}</p>
                     <p className="text-fine-print mt-1 text-[var(--muted-foreground)]">{link.description}</p>
                     <span className={`text-fine-print mt-3 inline-flex ${link.primary ? "text-[var(--primary)]" : "text-[var(--muted-foreground)]"} group-hover:text-[var(--primary)]`}>
-                      Manage
+                      จัดการ
                     </span>
                   </Link>
                 ))}

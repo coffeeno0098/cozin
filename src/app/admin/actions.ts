@@ -13,10 +13,12 @@ import {
   announcementFormSchema,
   createSlug,
   deleteMapFormSchema,
+  mapFormSchema,
   pointAdjustmentFormSchema,
   productFormSchema,
   toggleAnnouncementFormSchema,
   updateMapImageFormSchema,
+  updateProductFormSchema,
 } from "@/lib/admin-validation";
 
 function readForm(formData: FormData) {
@@ -173,6 +175,57 @@ export async function createProductAction(formData: FormData) {
   redirect("/admin/products?created=1");
 }
 
+export async function createMapAction(formData: FormData) {
+  const currentUser = await requireAdmin();
+
+  const parsed = mapFormSchema.safeParse(readForm(formData));
+
+  if (!parsed.success) {
+    redirect("/admin/products?error=invalid-map");
+  }
+
+  const [existingMap] = await db
+    .select({ id: gameMaps.id })
+    .from(gameMaps)
+    .where(eq(gameMaps.name, parsed.data.name))
+    .limit(1);
+
+  if (existingMap) {
+    redirect("/admin/products?error=duplicate-map");
+  }
+
+  const [createdMap] = await db
+    .insert(gameMaps)
+    .values({
+      name: parsed.data.name,
+      slug: await createUniqueMapSlug(parsed.data.name),
+      imageUrl: parsed.data.imageUrl ?? null,
+    })
+    .returning({
+      id: gameMaps.id,
+      name: gameMaps.name,
+      slug: gameMaps.slug,
+    });
+
+  await writeAdminAuditLog({
+    adminUserId: currentUser.id,
+    action: "map.create",
+    targetType: "map",
+    targetId: createdMap.id,
+    metadata: {
+      name: createdMap.name,
+      slug: createdMap.slug,
+      hasImage: Boolean(parsed.data.imageUrl),
+    },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/audit-logs");
+  revalidatePath("/admin/products");
+  revalidatePath("/products");
+  redirect("/admin/products?mapCreated=1");
+}
+
 export async function updateMapImageAction(formData: FormData) {
   const currentUser = await requireAdmin();
 
@@ -314,6 +367,71 @@ export async function toggleProductAction(formData: FormData) {
   revalidatePath("/admin/audit-logs");
   revalidatePath("/admin/products");
   revalidatePath("/products");
+  redirect("/admin/products?updated=1");
+}
+
+export async function updateProductAction(formData: FormData) {
+  const currentUser = await requireAdmin();
+
+  const parsed = updateProductFormSchema.safeParse(readForm(formData));
+
+  if (!parsed.success) {
+    redirect("/admin/products?error=invalid-product");
+  }
+
+  const [product] = await db
+    .select({
+      id: products.id,
+      name: products.name,
+      slug: products.slug,
+      description: products.description,
+      imageUrl: products.imageUrl,
+      pricePoints: products.pricePoints,
+      isActive: products.isActive,
+    })
+    .from(products)
+    .where(eq(products.id, parsed.data.productId))
+    .limit(1);
+
+  if (!product) {
+    redirect("/admin/products?error=product-not-found");
+  }
+
+  await db
+    .update(products)
+    .set({
+      name: parsed.data.name,
+      description: parsed.data.description,
+      imageUrl: parsed.data.imageUrl ?? null,
+      pricePoints: parsed.data.pricePoints,
+      isActive: parsed.data.isActive,
+      updatedAt: new Date(),
+    })
+    .where(eq(products.id, parsed.data.productId));
+
+  await writeAdminAuditLog({
+    adminUserId: currentUser.id,
+    action: "product.update",
+    targetType: "product",
+    targetId: product.id,
+    metadata: sanitizeAuditMetadata({
+      slug: product.slug,
+      previousName: product.name,
+      nextName: parsed.data.name,
+      previousPricePoints: product.pricePoints,
+      nextPricePoints: parsed.data.pricePoints,
+      hadImage: Boolean(product.imageUrl),
+      hasImage: Boolean(parsed.data.imageUrl),
+      previousIsActive: product.isActive,
+      nextIsActive: parsed.data.isActive,
+    }),
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/audit-logs");
+  revalidatePath("/admin/products");
+  revalidatePath("/products");
+  revalidatePath(`/products/${product.slug}`);
   redirect("/admin/products?updated=1");
 }
 
