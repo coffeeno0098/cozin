@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, ilike, or, type SQL } from "drizzle-orm";
 import Link from "next/link";
 
 import { adjustUserPointsAction } from "@/app/admin/actions";
@@ -13,8 +13,11 @@ type AdminUsersPageProps = {
     error?: string;
     q?: string;
     role?: string;
+    page?: string;
   }>;
 };
+
+const usersPerPage = 20;
 
 const errorMessages: Record<string, string> = {
   invalid: "กรุณาตรวจสอบฟอร์มปรับ Point",
@@ -24,29 +27,81 @@ const errorMessages: Record<string, string> = {
 
 export const dynamic = "force-dynamic";
 
+function parsePage(value?: string) {
+  const page = Number(value);
+
+  if (!Number.isInteger(page) || page < 1) {
+    return 1;
+  }
+
+  return page;
+}
+
+function parseRole(value?: string) {
+  if (value === "customer" || value === "admin") {
+    return value;
+  }
+
+  return null;
+}
+
+function buildUsersPageHref(page: number, query: string, role: "customer" | "admin" | null) {
+  const params = new URLSearchParams();
+  if (query) params.set("q", query);
+  if (role) params.set("role", role);
+  if (page > 1) params.set("page", String(page));
+  const search = params.toString();
+
+  return search ? `/admin/users?${search}` : "/admin/users";
+}
+
 export default async function AdminUsersPage({ searchParams }: AdminUsersPageProps) {
   await requireAdmin();
 
   const params = await searchParams;
   const errorMessage = params?.error ? errorMessages[params.error] : null;
   const query = params?.q?.trim() ?? "";
-  const selectedRole = params?.role ?? "all";
-  const normalizedQuery = query.toLowerCase();
-  const hasFilters = Boolean(query || selectedRole !== "all");
+  const selectedRole = parseRole(params?.role);
+  const requestedPage = parsePage(params?.page);
+  const hasFilters = Boolean(query || selectedRole);
+  const conditions: SQL[] = [];
+
+  if (selectedRole) {
+    conditions.push(eq(users.role, selectedRole));
+  }
+
+  if (query) {
+    const likeQuery = `%${query}%`;
+    const searchCondition = or(ilike(users.username, likeQuery), ilike(users.email, likeQuery));
+
+    if (searchCondition) {
+      conditions.push(searchCondition);
+    }
+  }
+
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+  const userCountQuery = db.select({ value: count() }).from(users);
+  const [{ value: totalUsers }] = await (whereClause ? userCountQuery.where(whereClause) : userCountQuery);
+  const totalPages = Math.max(1, Math.ceil(totalUsers / usersPerPage));
+  const currentPage = Math.min(requestedPage, totalPages);
+  const offset = (currentPage - 1) * usersPerPage;
+
+  const userQuery = db
+    .select({
+      id: users.id,
+      username: users.username,
+      email: users.email,
+      role: users.role,
+      points: users.points,
+      createdAt: users.createdAt,
+    })
+    .from(users);
 
   const [userRows, recentAdjustments] = await Promise.all([
-    db
-      .select({
-        id: users.id,
-        username: users.username,
-        email: users.email,
-        role: users.role,
-        points: users.points,
-        createdAt: users.createdAt,
-      })
-      .from(users)
+    (whereClause ? userQuery.where(whereClause) : userQuery)
       .orderBy(desc(users.createdAt))
-      .limit(100),
+      .limit(usersPerPage)
+      .offset(offset),
     db
       .select({
         id: pointTransactions.id,
@@ -63,14 +118,8 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
       .limit(10),
   ]);
 
-  const filteredUserRows = userRows.filter((user) => {
-    const matchesQuery = normalizedQuery
-      ? [user.username, user.email ?? ""].join(" ").toLowerCase().includes(normalizedQuery)
-      : true;
-    const matchesRole = selectedRole === "all" ? true : user.role === selectedRole;
-
-    return matchesQuery && matchesRole;
-  });
+  const firstVisible = totalUsers === 0 ? 0 : offset + 1;
+  const lastVisible = offset + userRows.length;
 
   return (
     <>
@@ -97,7 +146,17 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
             </div>
 
             <section className="utility-card animate-fade-in-up">
-              <h2 className="text-body-strong">ประวัติการปรับ Point ล่าสุด</h2>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 className="text-body-strong">ประวัติการปรับ Point ล่าสุด</h2>
+                  <p className="text-caption mt-1 text-[var(--muted-foreground)]">
+                    แสดง 10 รายการล่าสุดจากประวัติทั้งหมด
+                  </p>
+                </div>
+                <Link href="/admin/users/adjustments" className="text-caption-strong text-[var(--primary)] hover:underline">
+                  ดูประวัติทั้งหมด
+                </Link>
+              </div>
               {recentAdjustments.length === 0 ? (
                 <p className="text-caption mt-3 text-[var(--muted-foreground)]">ยังไม่มีการปรับ Point แบบ manual</p>
               ) : (
@@ -127,7 +186,7 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
               <div>
                 <h2 className="text-display-lg">รายชื่อสมาชิก</h2>
                 <p className="text-caption text-[var(--muted-foreground)]">
-                  แสดง {filteredUserRows.length} จาก {userRows.length} คนล่าสุด
+                  แสดง {firstVisible}-{lastVisible} จาก {totalUsers} คน
                 </p>
               </div>
 
@@ -144,7 +203,7 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
                 </label>
                 <label className="block space-y-2">
                   <span className="text-caption-strong">Role</span>
-                  <select name="role" defaultValue={selectedRole} className="input-apple">
+                  <select name="role" defaultValue={selectedRole ?? "all"} className="input-apple">
                     <option value="all">ทั้งหมด</option>
                     <option value="customer">ลูกค้า</option>
                     <option value="admin">Admin</option>
@@ -162,15 +221,15 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
                 </div>
               </form>
 
-              {userRows.length === 0 ? (
+              {totalUsers === 0 && !hasFilters ? (
                 <div className="utility-card">
                   <h2 className="text-body-strong">ยังไม่มีสมาชิก</h2>
                   <p className="text-caption mt-2 text-[var(--muted-foreground)]">เมื่อมีคนสมัครสมาชิก รายชื่อจะแสดงที่นี่</p>
                 </div>
-              ) : filteredUserRows.length === 0 ? (
+              ) : userRows.length === 0 ? (
                 <div className="utility-card text-caption text-[var(--muted-foreground)]">ไม่พบสมาชิกที่ตรงกับตัวกรอง</div>
               ) : (
-                filteredUserRows.map((user, i) => (
+                userRows.map((user, i) => (
                   <article key={user.id} className={`utility-card animate-fade-in-up ${i < 5 ? `delay-${i + 1}` : ""}`}>
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                       <div className="min-w-0">
@@ -224,6 +283,28 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
                   </article>
                 ))
               )}
+
+              {totalPages > 1 ? (
+                <nav className="utility-card flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" aria-label="Users pagination">
+                  {currentPage > 1 ? (
+                    <Link href={buildUsersPageHref(currentPage - 1, query, selectedRole)} className="btn-pill-ghost px-5 py-2.5 text-center text-caption">
+                      ก่อนหน้า
+                    </Link>
+                  ) : (
+                    <span className="btn-pill-ghost px-5 py-2.5 text-center text-caption opacity-40">ก่อนหน้า</span>
+                  )}
+                  <span className="text-center text-caption text-[var(--muted-foreground)]">
+                    หน้า {currentPage} จาก {totalPages} · {firstVisible}-{lastVisible} / {totalUsers}
+                  </span>
+                  {currentPage < totalPages ? (
+                    <Link href={buildUsersPageHref(currentPage + 1, query, selectedRole)} className="btn-pill px-5 py-2.5 text-center text-caption">
+                      ถัดไป
+                    </Link>
+                  ) : (
+                    <span className="btn-pill px-5 py-2.5 text-center text-caption opacity-40">ถัดไป</span>
+                  )}
+                </nav>
+              ) : null}
             </section>
           </div>
         </section>
