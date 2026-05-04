@@ -17,6 +17,7 @@ import {
   pointAdjustmentFormSchema,
   productFormSchema,
   toggleAnnouncementFormSchema,
+  updateCodeFormSchema,
   updateMapImageFormSchema,
   updateProductFormSchema,
 } from "@/lib/admin-validation";
@@ -61,6 +62,16 @@ function maskIdentifier(value: string) {
   }
 
   return `${"*".repeat(Math.max(value.length - 4, 0))}${value.slice(-4)}`;
+}
+
+function getAdminProductsReturnTo(formData: FormData) {
+  const value = formData.get("returnTo");
+
+  if (value === "/admin/products/manage") {
+    return "/admin/products/manage";
+  }
+
+  return "/admin/products";
 }
 
 async function resolveMap(input: { mapId?: string; newMapName?: string; newMapImageUrl?: string | null }) {
@@ -372,11 +383,12 @@ export async function toggleProductAction(formData: FormData) {
 
 export async function updateProductAction(formData: FormData) {
   const currentUser = await requireAdmin();
+  const returnTo = getAdminProductsReturnTo(formData);
 
   const parsed = updateProductFormSchema.safeParse(readForm(formData));
 
   if (!parsed.success) {
-    redirect("/admin/products?error=invalid-product");
+    redirect(`${returnTo}?error=invalid-product`);
   }
 
   const [product] = await db
@@ -394,7 +406,7 @@ export async function updateProductAction(formData: FormData) {
     .limit(1);
 
   if (!product) {
-    redirect("/admin/products?error=product-not-found");
+    redirect(`${returnTo}?error=product-not-found`);
   }
 
   await db
@@ -430,9 +442,10 @@ export async function updateProductAction(formData: FormData) {
   revalidatePath("/admin");
   revalidatePath("/admin/audit-logs");
   revalidatePath("/admin/products");
+  revalidatePath("/admin/products/manage");
   revalidatePath("/products");
   revalidatePath(`/products/${product.slug}`);
-  redirect("/admin/products?updated=1");
+  redirect(`${returnTo}?updated=1`);
 }
 
 export async function createCodeAction(formData: FormData) {
@@ -472,7 +485,68 @@ export async function createCodeAction(formData: FormData) {
   revalidatePath("/admin/audit-logs");
   revalidatePath("/admin/codes");
   revalidatePath("/admin/products");
+  revalidatePath("/admin/products/manage");
+  revalidatePath("/products");
   redirect("/admin/codes?created=1");
+}
+
+export async function updateCodeAction(formData: FormData) {
+  const currentUser = await requireAdmin();
+
+  const parsed = updateCodeFormSchema.safeParse(readForm(formData));
+
+  if (!parsed.success) {
+    redirect("/admin/codes/manage?error=invalid");
+  }
+
+  const [code] = await db
+    .select({
+      id: gameCodes.id,
+      productId: gameCodes.productId,
+      gameAccountId: gameCodes.gameAccountId,
+      gamePassword: gameCodes.gamePassword,
+      status: gameCodes.status,
+    })
+    .from(gameCodes)
+    .where(eq(gameCodes.id, parsed.data.codeId))
+    .limit(1);
+
+  if (!code) {
+    redirect("/admin/codes/manage?error=not-found");
+  }
+
+  if (code.status !== "available") {
+    redirect("/admin/codes/manage?error=locked");
+  }
+
+  const credentialChanged = typeof parsed.data.gamePassword === "string";
+
+  await db
+    .update(gameCodes)
+    .set({
+      gameAccountId: parsed.data.gameAccountId,
+      gamePassword: parsed.data.gamePassword ?? code.gamePassword,
+    })
+    .where(eq(gameCodes.id, parsed.data.codeId));
+
+  await writeAdminAuditLog({
+    adminUserId: currentUser.id,
+    action: "code.update",
+    targetType: "game_code",
+    targetId: code.id,
+    metadata: {
+      productId: code.productId,
+      previousGameAccountIdMasked: maskIdentifier(code.gameAccountId),
+      nextGameAccountIdMasked: maskIdentifier(parsed.data.gameAccountId),
+      credentialChanged,
+    },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/audit-logs");
+  revalidatePath("/admin/codes");
+  revalidatePath("/admin/codes/manage");
+  redirect("/admin/codes/manage?updated=1");
 }
 
 export async function adjustUserPointsAction(formData: FormData) {

@@ -5,6 +5,7 @@ import {
   pointAdjustmentFormSchema,
   productFormSchema,
   toggleAnnouncementFormSchema,
+  updateCodeFormSchema,
   updateMapImageFormSchema,
   updateProductFormSchema,
 } from "@/lib/admin-validation";
@@ -140,6 +141,35 @@ describe("updateMapImageFormSchema", () => {
         imageUrl: "not-a-url",
       }).success,
     ).toBe(false);
+  });
+});
+
+describe("updateCodeFormSchema", () => {
+  const baseUpdate = {
+    codeId: "3a6c545c-6672-4ab8-b87c-e1ff7ee1bd17",
+    gameAccountId: "player-001",
+    gamePassword: "",
+  };
+
+  it("allows keeping the existing password when the field is blank", () => {
+    const parsed = updateCodeFormSchema.safeParse(baseUpdate);
+
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.gamePassword).toBeUndefined();
+    }
+  });
+
+  it("accepts a replacement password when provided", () => {
+    const parsed = updateCodeFormSchema.safeParse({
+      ...baseUpdate,
+      gamePassword: "new-secret",
+    });
+
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.gamePassword).toBe("new-secret");
+    }
   });
 });
 

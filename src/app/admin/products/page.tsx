@@ -1,21 +1,13 @@
-import { asc, count, eq, sql } from "drizzle-orm";
+import Link from "next/link";
 
-import {
-  createMapAction,
-  createProductAction,
-  deleteMapAction,
-  updateMapImageAction,
-  updateProductAction,
-} from "@/app/admin/actions";
+import { createMapAction, createProductAction, deleteMapAction, updateMapImageAction } from "@/app/admin/actions";
+import { getAdminMapRows } from "@/app/admin/products/product-data";
 import { SiteNav } from "@/components/site-nav";
-import { db } from "@/db";
-import { gameCodes, gameMaps, products } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin";
 
 type ProductsPageProps = {
   searchParams?: Promise<{
     created?: string;
-    updated?: string;
     mapCreated?: string;
     mapUpdated?: string;
     mapDeleted?: string;
@@ -24,12 +16,6 @@ type ProductsPageProps = {
 };
 
 export const dynamic = "force-dynamic";
-
-function getStockBadge(availableCodes: number) {
-  if (availableCodes === 0) return { label: "สินค้าหมด", badgeClass: "badge-error" };
-  if (availableCodes <= 2) return { label: "เหลือน้อย", badgeClass: "badge-warning" };
-  return { label: "มีสินค้า", badgeClass: "badge-success" };
-}
 
 function getErrorMessage(error?: string) {
   if (error === "map-in-use") return "Map นี้ยังมีสินค้าใช้งานอยู่";
@@ -46,38 +32,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   await requireAdmin();
 
   const params = await searchParams;
-  const productRows = await db
-    .select({
-      id: products.id,
-      slug: products.slug,
-      name: products.name,
-      gameMap: sql<string>`coalesce(${gameMaps.name}, ${products.gameMap})`,
-      description: products.description,
-      imageUrl: products.imageUrl,
-      pricePoints: products.pricePoints,
-      isActive: products.isActive,
-      availableCodes: sql<number>`coalesce(count(${gameCodes.id}) filter (where ${gameCodes.status} = 'available'), 0)::int`,
-      soldCodes: sql<number>`coalesce(count(${gameCodes.id}) filter (where ${gameCodes.status} = 'sold'), 0)::int`,
-      reservedCodes: sql<number>`coalesce(count(${gameCodes.id}) filter (where ${gameCodes.status} = 'reserved'), 0)::int`,
-      totalCodes: count(gameCodes.id),
-    })
-    .from(products)
-    .leftJoin(gameMaps, eq(products.mapId, gameMaps.id))
-    .leftJoin(gameCodes, eq(gameCodes.productId, products.id))
-    .groupBy(products.id, gameMaps.id)
-    .orderBy(asc(products.createdAt));
-
-  const mapRows = await db
-    .select({
-      id: gameMaps.id,
-      name: gameMaps.name,
-      imageUrl: gameMaps.imageUrl,
-      productCount: count(products.id),
-    })
-    .from(gameMaps)
-    .leftJoin(products, eq(products.mapId, gameMaps.id))
-    .groupBy(gameMaps.id)
-    .orderBy(asc(gameMaps.name));
+  const mapRows = await getAdminMapRows();
 
   return (
     <>
@@ -91,16 +46,15 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             </p>
             <h1 className="text-display-lg mt-1">สินค้าและ Map</h1>
             <p className="text-body mt-1 text-[var(--muted-foreground)]">
-              แยกการสร้างสินค้าและการสร้าง Map ให้ใช้งานง่ายขึ้น
+              หน้านี้ใช้สำหรับสร้างสินค้าใหม่ และจัดการ Map โดยไม่ต้องเลื่อนผ่านรายการสินค้าจำนวนมาก
             </p>
           </div>
         </section>
 
         <section className="tile-light tile-section">
           <div className="mx-auto max-w-6xl">
-            <div aria-live="polite" className="space-y-3 mb-8">
+            <div aria-live="polite" className="mb-8 space-y-3">
               {params?.created ? <div className="alert-success">สร้างสินค้าแล้ว</div> : null}
-              {params?.updated ? <div className="alert-success">อัปเดตสินค้าแล้ว</div> : null}
               {params?.mapCreated ? <div className="alert-success">สร้าง Map แล้ว</div> : null}
               {params?.mapUpdated ? <div className="alert-success">อัปเดตรูป Map แล้ว</div> : null}
               {params?.mapDeleted ? <div className="alert-success">ลบ Map แล้ว</div> : null}
@@ -109,9 +63,14 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
             <div className="space-y-10">
               <section className="space-y-5">
-                <div>
-                  <p className="text-caption text-[var(--muted-foreground)]">ส่วนที่ใช้บ่อย</p>
-                  <h2 className="text-display-lg mt-1">สร้างสินค้าใหม่</h2>
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                  <div>
+                    <p className="text-caption text-[var(--muted-foreground)]">ส่วนที่ใช้บ่อย</p>
+                    <h2 className="text-display-lg mt-1">สร้างสินค้าใหม่</h2>
+                  </div>
+                  <Link href="/admin/products/manage" className="btn-pill-ghost px-6 py-3 text-caption">
+                    จัดการสินค้าทั้งหมด
+                  </Link>
                 </div>
 
                 <form action={createProductAction} className="utility-card grid gap-5 animate-fade-in-up lg:grid-cols-2">
@@ -125,7 +84,9 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                       <select name="mapId" required className="input-apple">
                         <option value="">เลือก Map สำหรับสินค้านี้</option>
                         {mapRows.map((map) => (
-                          <option key={map.id} value={map.id}>{map.name}</option>
+                          <option key={map.id} value={map.id}>
+                            {map.name}
+                          </option>
                         ))}
                       </select>
                       <span className="text-fine-print text-[var(--muted-foreground)]">
@@ -157,106 +118,11 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                       <span className="text-caption-strong">รายละเอียดสินค้า</span>
                       <textarea name="description" className="textarea-apple min-h-36" />
                     </label>
-                    <button type="submit" className="btn-pill w-full">สร้างสินค้า</button>
+                    <button type="submit" className="btn-pill w-full">
+                      สร้างสินค้า
+                    </button>
                   </div>
                 </form>
-
-                {productRows.length === 0 ? (
-                  <div className="utility-card text-caption text-[var(--muted-foreground)]">ยังไม่มีสินค้า</div>
-                ) : (
-                  <div className="grid gap-5">
-                    {productRows.map((product, i) => {
-                      const stockBadge = getStockBadge(product.availableCodes);
-                      return (
-                        <div key={product.id} className={`utility-card animate-fade-in-up ${i < 5 ? `delay-${i + 1}` : ""}`}>
-                          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                            <div className="min-w-0 flex-1">
-                              {product.imageUrl ? (
-                                <div className="mb-4 aspect-[16/9] max-w-sm overflow-hidden rounded-xl border border-[var(--hairline)] bg-[var(--surface-parchment)]">
-                                  {/* eslint-disable-next-line @next/next/no-img-element -- Admin-provided image URLs can come from any domain. */}
-                                  <img
-                                    src={product.imageUrl}
-                                    alt={product.name}
-                                    loading="lazy"
-                                    referrerPolicy="no-referrer"
-                                    className="h-full w-full object-cover"
-                                  />
-                                </div>
-                              ) : null}
-                              <div className="flex flex-wrap items-center gap-2">
-                                <h3 className="text-body-strong truncate">{product.name}</h3>
-                                <span className={product.isActive ? "badge-success" : "badge-neutral"}>
-                                  {product.isActive ? "เปิดขาย" : "ซ่อนอยู่"}
-                                </span>
-                                <span className={stockBadge.badgeClass}>{stockBadge.label}</span>
-                              </div>
-                              <p className="text-caption mt-1 text-[var(--muted-foreground)]">{product.gameMap}</p>
-                              {product.description ? (
-                                <p className="text-caption mt-2 text-[var(--muted-foreground)] line-clamp-2">{product.description}</p>
-                              ) : null}
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-2 lg:min-w-64">
-                              <div className="rounded-xl border border-[var(--hairline)] px-3 py-2 text-center">
-                                <p className="text-fine-print text-[var(--muted-foreground)]">ราคา</p>
-                                <p className="text-body-strong tabular-nums">{product.pricePoints}</p>
-                              </div>
-                              <div className="rounded-xl border border-[var(--hairline)] px-3 py-2 text-center">
-                                <p className="text-fine-print text-[var(--muted-foreground)]">พร้อมขาย</p>
-                                <p className="text-body-strong tabular-nums">{product.availableCodes}</p>
-                              </div>
-                              <div className="rounded-xl border border-[var(--hairline)] px-3 py-2 text-center">
-                                <p className="text-fine-print text-[var(--muted-foreground)]">ขายแล้ว</p>
-                                <p className="text-body-strong tabular-nums">{product.soldCodes}</p>
-                              </div>
-                              <div className="rounded-xl border border-[var(--hairline)] px-3 py-2 text-center">
-                                <p className="text-fine-print text-[var(--muted-foreground)]">กันไว้ / ทั้งหมด</p>
-                                <p className="text-body-strong tabular-nums">{product.reservedCodes} / {product.totalCodes}</p>
-                              </div>
-                            </div>
-                          </div>
-                          <form action={updateProductAction} className="mt-5 border-t border-[var(--hairline)] pt-5">
-                            <input type="hidden" name="productId" value={product.id} />
-                            <div className="grid gap-4 lg:grid-cols-2">
-                              <label className="block space-y-2">
-                                <span className="text-caption-strong">ชื่อสินค้า</span>
-                                <input name="name" defaultValue={product.name} required spellCheck={false} className="input-apple" />
-                              </label>
-                              <label className="block space-y-2">
-                                <span className="text-caption-strong">ราคา Point</span>
-                                <input name="pricePoints" type="number" min={1} defaultValue={product.pricePoints} required className="input-apple" />
-                              </label>
-                              <label className="block space-y-2 lg:col-span-2">
-                                <span className="text-caption-strong">รูปสินค้า URL</span>
-                                <input
-                                  name="imageUrl"
-                                  type="url"
-                                  defaultValue={product.imageUrl ?? ""}
-                                  placeholder="https://example.com/product.png"
-                                  spellCheck={false}
-                                  className="input-apple"
-                                />
-                              </label>
-                              <label className="block space-y-2 lg:col-span-2">
-                                <span className="text-caption-strong">รายละเอียดสินค้า</span>
-                                <textarea name="description" defaultValue={product.description ?? ""} className="textarea-apple min-h-28" />
-                              </label>
-                            </div>
-                            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                              <label className="flex items-center gap-2 text-caption">
-                                <input name="isActive" type="checkbox" defaultChecked={product.isActive} className="size-4 accent-[var(--primary)]" />
-                                เปิดขาย
-                              </label>
-                              <button type="submit" className="btn-pill px-6 py-2 text-caption">
-                                บันทึกสินค้า
-                              </button>
-                            </div>
-                          </form>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
               </section>
 
               <section className="space-y-5">
@@ -287,7 +153,9 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                         className="input-apple"
                       />
                     </label>
-                    <button type="submit" className="btn-pill w-full">สร้าง Map</button>
+                    <button type="submit" className="btn-pill w-full">
+                      สร้าง Map
+                    </button>
                   </form>
 
                   <div className="utility-card animate-fade-in-up delay-1">
@@ -316,7 +184,9 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                               ) : null}
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2 text-caption">
-                                  <span className="font-medium" translate="no">{map.name}</span>
+                                  <span className="font-medium" translate="no">
+                                    {map.name}
+                                  </span>
                                   <span className="text-[var(--muted-foreground)] tabular-nums">({map.productCount})</span>
                                 </div>
                                 <form action={updateMapImageAction} className="mt-2 flex flex-col gap-2 sm:flex-row">
@@ -336,7 +206,11 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                               </div>
                               <form action={deleteMapAction}>
                                 <input type="hidden" name="mapId" value={map.id} />
-                                <button type="submit" disabled={map.productCount > 0} className="text-fine-print text-[var(--primary)] disabled:text-[var(--muted-foreground)] disabled:cursor-not-allowed hover:underline">
+                                <button
+                                  type="submit"
+                                  disabled={map.productCount > 0}
+                                  className="text-fine-print text-[var(--primary)] hover:underline disabled:cursor-not-allowed disabled:text-[var(--muted-foreground)]"
+                                >
                                   ลบ
                                 </button>
                               </form>

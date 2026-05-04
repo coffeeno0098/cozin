@@ -70,6 +70,15 @@ export const codeFormSchema = z.object({
   gamePassword: z.string().trim().min(1).max(255),
 });
 
+export const updateCodeFormSchema = z.object({
+  codeId: z.string().uuid(),
+  gameAccountId: z.string().trim().min(1).max(255),
+  gamePassword: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.string().trim().min(1).max(255).optional(),
+  ),
+});
+
 export const pointAdjustmentFormSchema = z.object({
   userId: z.string().uuid(),
   pointsDelta: z.coerce.number().int().min(-1_000_000).max(1_000_000).refine((value) => value !== 0, {

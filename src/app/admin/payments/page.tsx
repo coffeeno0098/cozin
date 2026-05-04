@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
 import Link from "next/link";
 
 import { SiteNav } from "@/components/site-nav";
@@ -8,6 +8,8 @@ import { requireAdmin } from "@/lib/admin";
 import { normalizeAdminSearch, parseAdminPaymentStatus } from "@/lib/admin-list-filters";
 
 export const dynamic = "force-dynamic";
+
+const paymentsPerPage = 20;
 
 type RawPaymentResponse = {
   code?: unknown;
@@ -44,6 +46,7 @@ type AdminPaymentsPageProps = {
   searchParams?: Promise<{
     q?: string;
     status?: string;
+    page?: string;
   }>;
 };
 
@@ -55,12 +58,32 @@ function buildPaymentsFilterHref(status: string | null, query: string) {
   return search ? `/admin/payments?${search}` : "/admin/payments";
 }
 
+function buildPaymentsPageHref(page: number, status: string | null, query: string) {
+  const params = new URLSearchParams();
+  if (status) params.set("status", status);
+  if (query) params.set("q", query);
+  if (page > 1) params.set("page", String(page));
+  const search = params.toString();
+  return search ? `/admin/payments?${search}` : "/admin/payments";
+}
+
+function parsePage(value?: string) {
+  const page = Number(value);
+
+  if (!Number.isInteger(page) || page < 1) {
+    return 1;
+  }
+
+  return page;
+}
+
 export default async function AdminPaymentsPage({ searchParams }: AdminPaymentsPageProps) {
   await requireAdmin();
 
   const params = await searchParams;
   const query = normalizeAdminSearch(params?.q);
   const status = parseAdminPaymentStatus(params?.status);
+  const requestedPage = parsePage(params?.page);
   const conditions: SQL[] = [];
 
   if (status) {
@@ -81,7 +104,16 @@ export default async function AdminPaymentsPage({ searchParams }: AdminPaymentsP
   }
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-  const baseQuery = db
+  const paymentCountQuery = db
+    .select({ value: count() })
+    .from(payments)
+    .innerJoin(users, eq(payments.userId, users.id));
+  const [{ value: totalPayments }] = await (whereClause ? paymentCountQuery.where(whereClause) : paymentCountQuery);
+  const totalPages = Math.max(1, Math.ceil(totalPayments / paymentsPerPage));
+  const currentPage = Math.min(requestedPage, totalPages);
+  const offset = (currentPage - 1) * paymentsPerPage;
+
+  const paymentQuery = db
     .select({
       id: payments.id,
       username: users.username,
@@ -96,10 +128,13 @@ export default async function AdminPaymentsPage({ searchParams }: AdminPaymentsP
     .from(payments)
     .innerJoin(users, eq(payments.userId, users.id));
 
-  const paymentRows = await (whereClause ? baseQuery.where(whereClause) : baseQuery)
+  const paymentRows = await (whereClause ? paymentQuery.where(whereClause) : paymentQuery)
     .orderBy(desc(payments.createdAt))
-    .limit(100);
+    .limit(paymentsPerPage)
+    .offset(offset);
   const hasFilters = Boolean(query || status);
+  const firstVisible = totalPayments === 0 ? 0 : offset + 1;
+  const lastVisible = offset + paymentRows.length;
   const statusTabs = [
     { label: "All", value: null },
     { label: "Pending", value: "pending" },
@@ -163,6 +198,13 @@ export default async function AdminPaymentsPage({ searchParams }: AdminPaymentsP
               </div>
             </div>
 
+            <div className="flex flex-col gap-2 text-caption text-[var(--muted-foreground)] sm:flex-row sm:items-center sm:justify-between">
+              <p>
+                Showing {firstVisible}-{lastVisible} of {totalPayments} payments
+              </p>
+              <p>Page {currentPage} of {totalPages}</p>
+            </div>
+
             {paymentRows.length === 0 ? (
               <div className="utility-card animate-fade-in-up">
                 <h2 className="text-body-strong">{hasFilters ? "No Matching Payments" : "No Payments Yet"}</h2>
@@ -214,6 +256,28 @@ export default async function AdminPaymentsPage({ searchParams }: AdminPaymentsP
                 );
               })
             )}
+
+            {totalPages > 1 ? (
+              <nav className="utility-card flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" aria-label="Payments pagination">
+                {currentPage > 1 ? (
+                  <Link href={buildPaymentsPageHref(currentPage - 1, status, query)} className="btn-pill-ghost px-5 py-2.5 text-caption text-center">
+                    Previous
+                  </Link>
+                ) : (
+                  <span className="btn-pill-ghost px-5 py-2.5 text-caption text-center opacity-40">Previous</span>
+                )}
+                <span className="text-caption text-[var(--muted-foreground)] text-center">
+                  {firstVisible}-{lastVisible} / {totalPayments}
+                </span>
+                {currentPage < totalPages ? (
+                  <Link href={buildPaymentsPageHref(currentPage + 1, status, query)} className="btn-pill px-5 py-2.5 text-caption text-center">
+                    Next
+                  </Link>
+                ) : (
+                  <span className="btn-pill px-5 py-2.5 text-caption text-center opacity-40">Next</span>
+                )}
+              </nav>
+            ) : null}
           </div>
         </section>
       </main>
