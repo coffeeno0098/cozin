@@ -3,11 +3,11 @@ import { AlertCircle, ClipboardList, Coins, Gamepad2, PackageCheck } from "lucid
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { buyProductAction } from "@/app/products/actions";
 import { auth } from "@/auth";
 import { SiteNav } from "@/components/site-nav";
 import { db } from "@/db";
 import { gameCodes, gameMaps, products, users } from "@/db/schema";
+import { QuantityPurchaseForm } from "./quantity-purchase-form";
 
 type ProductDetailPageProps = {
   params: Promise<{
@@ -95,7 +95,6 @@ export default async function ProductDetailPage({
   const isLoggedIn = Boolean(session?.user?.id);
   const userPoints = currentUser?.points ?? 0;
   const hasEnoughPoints = isLoggedIn && userPoints >= product.pricePoints;
-  const canBuy = isLoggedIn && isInStock && hasEnoughPoints;
   const stockStatus = getStockStatus(product.availableCodes);
   const errorMessage = query?.error ? errorMessages[query.error] : null;
   const pointsNeeded = Math.max(product.pricePoints - userPoints, 0);
@@ -314,33 +313,13 @@ export default async function ProductDetailPage({
 
                   <div className="mt-7">
                     {session?.user?.id ? (
-                      <form action={buyProductAction}>
-                        <input type="hidden" name="productId" value={product.id} />
-                        <input type="hidden" name="slug" value={product.slug} />
-                        <button
-                          type="submit"
-                          disabled={!canBuy}
-                          className="inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-xl px-5 text-caption-strong transition disabled:cursor-not-allowed disabled:bg-white/12 disabled:text-white/35"
-                          style={canBuy ? {
-                            background: "linear-gradient(135deg, #a78bfa 0%, #818cf8 50%, #60a5fa 100%)",
-                            color: "white",
-                            boxShadow: "0 8px 28px rgba(129,140,248,0.3)",
-                          } : undefined}
-                        >
-                          {canBuy ? (
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              <path d="M3 6h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              <path d="M16 10a4 4 0 0 1-8 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          ) : null}
-                          {!isInStock
-                            ? "สินค้าหมด"
-                            : hasEnoughPoints
-                              ? "ซื้อเลย"
-                              : "Point ไม่พอ"}
-                        </button>
-                      </form>
+                      <QuantityPurchaseForm
+                        productId={product.id}
+                        slug={product.slug}
+                        pricePoints={product.pricePoints}
+                        userPoints={userPoints}
+                        availableCodes={product.availableCodes}
+                      />
                     ) : (
                       <Link
                         href="/login"

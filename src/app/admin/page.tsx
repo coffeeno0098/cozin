@@ -49,7 +49,10 @@ function getOrderBadgeClass(status: string) {
 
 function DashboardIcon({ iconKey }: { iconKey: string }) {
   return (
-    <span className="grid size-11 shrink-0 place-items-center rounded-2xl border border-white/10 bg-white/[0.06] text-white">
+    <span
+      className="grid size-11 shrink-0 place-items-center rounded-2xl text-white"
+      style={{ background: "linear-gradient(135deg, #a78bfa 0%, #818cf8 50%, #60a5fa 100%)", boxShadow: "0 6px 20px rgba(129,140,248,0.25)" }}
+    >
       <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path
           d={statIcons[iconKey] ?? statIcons.Products}
@@ -65,9 +68,16 @@ function DashboardIcon({ iconKey }: { iconKey: string }) {
 
 function EmptyDashboardCard({ title, description }: { title: string; description: string }) {
   return (
-    <div className="grid min-h-[160px] place-items-center rounded-[1.25rem] border border-white/10 bg-white/[0.03] px-5 py-8 text-center">
-      <div>
-        <div className="mx-auto grid size-14 place-items-center rounded-2xl border border-white/10 bg-white/[0.04] text-white/55">
+    <div className="relative grid min-h-[160px] place-items-center overflow-hidden rounded-[1.25rem] border border-white/10 bg-white/[0.03] px-5 py-8 text-center">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.03]"
+        style={{ background: "radial-gradient(ellipse at center, #818cf8, transparent 70%)" }}
+      />
+      <div className="relative">
+        <div
+          className="mx-auto grid size-14 place-items-center rounded-2xl text-white"
+          style={{ background: "linear-gradient(135deg, #a78bfa 0%, #818cf8 50%, #60a5fa 100%)", boxShadow: "0 6px 20px rgba(129,140,248,0.2)" }}
+        >
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path
               d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
@@ -136,28 +146,54 @@ export default async function AdminPage() {
     <>
       <SiteNav />
 
-      <main id="main-content" className="flex-1 bg-black text-white">
-        <section className="px-5 pb-14 pt-14 sm:px-6 lg:px-8">
+      <main id="main-content" className="relative flex-1 overflow-hidden bg-black text-white">
+        <section className="relative px-5 pb-14 pt-14 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
             <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div className="animate-fade-in-up">
-                <h1 className="text-display-lg text-white">แดชบอร์ดร้าน</h1>
-                <div className="mt-3 flex flex-wrap items-center gap-3">
-                  <p className="text-caption text-white/62">
-                    ยินดีต้อนรับ, {currentUser.username}
-                  </p>
-                  <span className="rounded-full border border-white/10 bg-white px-3 py-1 text-fine-print font-semibold text-black">
-                    ผู้ดูแลระบบ
-                  </span>
+                <div className="flex items-center gap-4">
+                  <div
+                    className="grid size-14 shrink-0 place-items-center rounded-2xl text-white shadow-lg"
+                    style={{ background: "linear-gradient(135deg, #a78bfa 0%, #818cf8 50%, #60a5fa 100%)", boxShadow: "0 8px 28px rgba(129,140,248,0.25)" }}
+                  >
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+                      <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+                      <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+                      <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h1 className="text-display-lg text-white">แดชบอร์ดร้าน</h1>
+                    <div className="mt-2 flex flex-wrap items-center gap-3">
+                      <p className="text-caption text-white/62">
+                        ยินดีต้อนรับ, {currentUser.username}
+                      </p>
+                      <span
+                        className="rounded-full px-3 py-1 text-fine-print font-bold text-white"
+                        style={{ background: "linear-gradient(135deg, #a78bfa 0%, #60a5fa 100%)" }}
+                      >
+                        ผู้ดูแลระบบ
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-3 animate-fade-in-up delay-1">
-                <Link href="/admin/codes" className="btn-pill-on-dark text-caption px-5 py-3">
+                <Link
+                  href="/admin/codes"
+                  className="inline-flex items-center gap-2 rounded-full px-5 py-3 text-caption font-bold text-white transition hover:brightness-110"
+                  style={{ background: "linear-gradient(135deg, #a78bfa 0%, #818cf8 50%, #60a5fa 100%)", boxShadow: "0 6px 20px rgba(129,140,248,0.3)" }}
+                >
                   <span aria-hidden="true">+</span>
                   เพิ่ม Stock
                 </Link>
-                <Link href="/admin/products" className="btn-pill-ghost border-white/30 text-caption text-white hover:bg-white/10">
+                <Link
+                  href="/admin/products"
+                  className="inline-flex items-center gap-2 rounded-full border px-5 py-3 text-caption font-bold text-white/90 transition hover:bg-white/[0.06] hover:text-white"
+                  style={{ borderColor: "rgba(129,140,248,0.25)" }}
+                >
                   จัดการสินค้า
                 </Link>
               </div>
@@ -167,33 +203,54 @@ export default async function AdminPage() {
               {stats.map((stat, i) => (
                 <article
                   key={stat.label}
-                  className={`rounded-[1.25rem] border border-white/10 bg-[#0b0b0b] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.28)] animate-fade-in-up ${i < 5 ? `delay-${i + 1}` : ""}`}
+                  className={`overflow-hidden rounded-[1.25rem] border border-white/10 bg-[#0b0b0b] shadow-[0_20px_60px_rgba(0,0,0,0.28)] animate-fade-in-up ${i < 5 ? `delay-${i + 1}` : ""}`}
                 >
-                  <DashboardIcon iconKey={stat.iconKey} />
-                  <p className="text-caption-strong mt-5 text-white">{stat.label}</p>
-                  <p className="mt-4 text-3xl font-semibold leading-none text-white tabular-nums">{stat.value}</p>
-                  <p className="text-caption mt-3 min-h-[40px] text-white/55">{stat.detail}</p>
+                  <div
+                    className="h-1"
+                    style={{ background: "linear-gradient(90deg, #a78bfa, #818cf8, #60a5fa)" }}
+                  />
+                  <div className="p-5">
+                    <DashboardIcon iconKey={stat.iconKey} />
+                    <p className="text-caption-strong mt-5 text-white">{stat.label}</p>
+                    <p className="mt-4 text-3xl font-semibold leading-none text-white tabular-nums">{stat.value}</p>
+                    <p className="text-caption mt-3 min-h-[40px] text-white/55">{stat.detail}</p>
+                  </div>
                 </article>
               ))}
 
-              <article className="rounded-[1.25rem] border border-white/10 bg-[#0b0b0b] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.28)] animate-fade-in-up delay-6">
-                <DashboardIcon iconKey="Stock" />
-                <p className="text-caption-strong mt-5 text-white">Stock</p>
-                <p className="mt-4 text-3xl font-semibold leading-none text-white tabular-nums">
-                  {dashboard.stockSummary.availableCodes}
-                </p>
-                <div className="mt-5 space-y-3 text-caption">
-                  <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-2">
-                    <span className="text-white/55">พร้อมขาย</span>
-                    <span className="font-semibold text-white tabular-nums">{dashboard.stockSummary.availableCodes}</span>
-                  </div>
-                  <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-2">
-                    <span className="text-white/55">ขายแล้ว</span>
-                    <span className="font-semibold text-white tabular-nums">{dashboard.stockSummary.soldCodes}</span>
-                  </div>
-                  <div className="flex items-center justify-between gap-4">
-                    <span className="text-white/55">จองไว้</span>
-                    <span className="font-semibold text-white tabular-nums">{dashboard.stockSummary.reservedCodes}</span>
+              <article className="overflow-hidden rounded-[1.25rem] border border-white/10 bg-[#0b0b0b] shadow-[0_20px_60px_rgba(0,0,0,0.28)] animate-fade-in-up delay-6">
+                <div
+                  className="h-1"
+                  style={{ background: "linear-gradient(90deg, #a78bfa, #818cf8, #60a5fa)" }}
+                />
+                <div className="p-5">
+                  <DashboardIcon iconKey="Stock" />
+                  <p className="text-caption-strong mt-5 text-white">Stock</p>
+                  <p className="mt-4 text-3xl font-semibold leading-none text-white tabular-nums">
+                    {dashboard.stockSummary.availableCodes}
+                  </p>
+                  <div className="mt-5 space-y-3 text-caption">
+                    <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-2">
+                      <span className="flex items-center gap-1.5 text-white/55">
+                        <span className="inline-block size-1.5 rounded-full" style={{ background: "#34c759" }} />
+                        พร้อมขาย
+                      </span>
+                      <span className="font-semibold text-white tabular-nums">{dashboard.stockSummary.availableCodes}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-2">
+                      <span className="flex items-center gap-1.5 text-white/55">
+                        <span className="inline-block size-1.5 rounded-full" style={{ background: "#a78bfa" }} />
+                        ขายแล้ว
+                      </span>
+                      <span className="font-semibold text-white tabular-nums">{dashboard.stockSummary.soldCodes}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="flex items-center gap-1.5 text-white/55">
+                        <span className="inline-block size-1.5 rounded-full" style={{ background: "#60a5fa" }} />
+                        จองไว้
+                      </span>
+                      <span className="font-semibold text-white tabular-nums">{dashboard.stockSummary.reservedCodes}</span>
+                    </div>
                   </div>
                 </div>
               </article>
@@ -201,7 +258,9 @@ export default async function AdminPage() {
 
             <section className="mt-5 grid gap-5 xl:grid-cols-[1.05fr_1.25fr_0.95fr]">
               <div className="space-y-5">
-                <section className="rounded-[1.35rem] border border-white/10 bg-[#0b0b0b] p-5 animate-fade-in-up">
+                <section className="overflow-hidden rounded-[1.35rem] border border-white/10 bg-[#0b0b0b] animate-fade-in-up">
+                  <div className="h-1" style={{ background: "linear-gradient(90deg, #a78bfa, #818cf8, #60a5fa)" }} />
+                  <div className="p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <h2 className="text-body-strong text-white">Stock ใกล้หมด</h2>
@@ -242,7 +301,8 @@ export default async function AdminPage() {
                         </Link>
                       ))}
                     </div>
-                  )}
+                   )}
+                  </div>
                 </section>
 
                 {dashboard.lowStockProducts.length > 0 ? (
@@ -254,7 +314,9 @@ export default async function AdminPage() {
               </div>
 
               <div className="space-y-5">
-                <section className="rounded-[1.35rem] border border-white/10 bg-[#0b0b0b] p-5 animate-fade-in-up delay-1">
+                <section className="overflow-hidden rounded-[1.35rem] border border-white/10 bg-[#0b0b0b] animate-fade-in-up delay-1">
+                  <div className="h-1" style={{ background: "linear-gradient(90deg, #a78bfa, #818cf8, #60a5fa)" }} />
+                  <div className="p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <h2 className="text-body-strong text-white">ออเดอร์ล่าสุด</h2>
@@ -283,7 +345,7 @@ export default async function AdminPage() {
                         </thead>
                         <tbody className="divide-y divide-white/10">
                           {dashboard.latestOrders.map((order) => (
-                            <tr key={order.id}>
+                          <tr key={order.id} className="transition-colors hover:bg-white/[0.03]">
                               <td className="max-w-[190px] py-3">
                                 <p className="truncate font-semibold text-white">{order.productName}</p>
                                 <p className="text-fine-print mt-1 text-white/45">{order.gameMap}</p>
@@ -300,9 +362,12 @@ export default async function AdminPage() {
                       </table>
                     </div>
                   )}
+                  </div>
                 </section>
 
-                <section className="rounded-[1.35rem] border border-white/10 bg-[#0b0b0b] p-5 animate-fade-in-up delay-2">
+                <section className="overflow-hidden rounded-[1.35rem] border border-white/10 bg-[#0b0b0b] animate-fade-in-up delay-2">
+                  <div className="h-1" style={{ background: "linear-gradient(90deg, #a78bfa, #818cf8, #60a5fa)" }} />
+                  <div className="p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <h2 className="text-body-strong text-white">การชำระเงินล่าสุด</h2>
@@ -330,7 +395,7 @@ export default async function AdminPage() {
                         </thead>
                         <tbody className="divide-y divide-white/10">
                           {dashboard.latestPayments.map((payment) => (
-                            <tr key={payment.id}>
+                            <tr key={payment.id} className="transition-colors hover:bg-white/[0.03]">
                               <td className="py-3 font-semibold text-white">{payment.username}</td>
                               <td className="py-3">
                                 <span className={getPaymentBadgeClass(payment.status)}>{payment.status}</span>
@@ -345,11 +410,14 @@ export default async function AdminPage() {
                       </table>
                     </div>
                   )}
+                  </div>
                 </section>
               </div>
 
-              <aside className="rounded-[1.35rem] border border-white/10 bg-[#0b0b0b] p-5 animate-fade-in-up delay-3">
-                <h2 className="text-body-strong text-white">เมนูลัด Admin</h2>
+              <aside className="overflow-hidden rounded-[1.35rem] border border-white/10 bg-[#0b0b0b] animate-fade-in-up delay-3">
+                <div className="h-1" style={{ background: "linear-gradient(90deg, #a78bfa, #818cf8, #60a5fa)" }} />
+                <div className="p-5">
+                  <h2 className="text-body-strong text-white">เมนูลัด Admin</h2>
                 <p className="text-caption mt-1 text-white/55">
                   เมนูที่ใช้บ่อยสำหรับดูแลร้าน
                 </p>
@@ -359,7 +427,7 @@ export default async function AdminPage() {
                     <Link
                       key={link.href}
                       href={link.href}
-                      className="group flex items-center gap-4 rounded-[1rem] border border-white/10 bg-white/[0.03] p-4 transition-colors hover:bg-white/[0.07]"
+                      className="group flex items-center gap-4 rounded-[1rem] border border-white/[0.08] bg-white/[0.02] p-4 transition-[background-color,border-color,box-shadow] hover:border-[rgba(129,140,248,0.2)] hover:bg-white/[0.05] hover:shadow-[0_8px_24px_rgba(129,140,248,0.08)]"
                     >
                       <DashboardIcon iconKey={link.iconKey} />
                       <span className="min-w-0 flex-1">
@@ -372,6 +440,7 @@ export default async function AdminPage() {
                       </span>
                     </Link>
                   ))}
+                </div>
                 </div>
               </aside>
             </section>

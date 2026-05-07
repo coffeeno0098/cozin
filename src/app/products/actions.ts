@@ -10,6 +10,7 @@ import { buildRateLimitKey, checkRateLimit, rateLimitWindows } from "@/lib/rate-
 const buyProductSchema = z.object({
   productId: z.uuid(),
   slug: z.string().min(1).max(120).regex(/^[a-z0-9-]+$/),
+  quantity: z.coerce.number().int().min(1).max(20).default(1),
 });
 
 export async function buyProductAction(formData: FormData) {
@@ -22,6 +23,7 @@ export async function buyProductAction(formData: FormData) {
   const parsed = buyProductSchema.safeParse({
     productId: formData.get("productId"),
     slug: formData.get("slug"),
+    quantity: formData.get("quantity") ?? 1,
   });
 
   if (!parsed.success) {
@@ -35,7 +37,7 @@ export async function buyProductAction(formData: FormData) {
     redirect(`/products/${parsed.data.slug}?error=rate-limit`);
   }
 
-  const result = await purchaseProduct(session.user.id, parsed.data.productId);
+  const result = await purchaseProduct(session.user.id, parsed.data.productId, parsed.data.quantity);
 
   if (!result.ok) {
     redirect(`/products/${parsed.data.slug}?error=${result.reason}`);

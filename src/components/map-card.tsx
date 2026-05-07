@@ -14,7 +14,7 @@ export function MapCard({ map }: MapCardProps) {
   return (
     <Link
       href={`/products/maps/${map.slug}`}
-      className="utility-card group relative block animate-scale-in overflow-hidden p-0 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_60px_rgba(129,140,248,0.08)]"
+      className="utility-card group relative block animate-scale-in overflow-hidden p-0 transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_20px_60px_rgba(129,140,248,0.08)]"
     >
       {/* ── Gradient accent bar ── */}
       <div
@@ -29,6 +29,8 @@ export function MapCard({ map }: MapCardProps) {
             <img
               src={map.imageUrl}
               alt={map.name}
+              width={1600}
+              height={1000}
               loading="lazy"
               referrerPolicy="no-referrer"
               className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.015]"
@@ -81,7 +83,7 @@ export function MapCard({ map }: MapCardProps) {
         </div>
 
         <div
-          className="mt-5 flex items-center justify-center gap-2 rounded-xl py-2.5 text-body font-medium transition-all duration-200"
+          className="mt-5 flex items-center justify-center gap-2 rounded-xl py-2.5 text-body font-medium transition-[background-color,color] duration-200"
           style={{
             background: "linear-gradient(135deg, rgba(167,139,250,0.08) 0%, rgba(96,165,250,0.08) 100%)",
             color: "#818cf8",

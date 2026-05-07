@@ -50,7 +50,12 @@ class InsertQuery {
     private readonly returningResult?: SelectResult,
   ) {}
 
-  values(values: Record<string, unknown>) {
+  values(values: Record<string, unknown> | Array<Record<string, unknown>>) {
+    if (Array.isArray(values)) {
+      this.writes.push(...values);
+      return this;
+    }
+
     this.writes.push(values);
     return this;
   }
@@ -125,6 +130,7 @@ describe("purchaseProduct", () => {
     await expect(purchaseProduct("user-1", "product-1", harness.database as never)).resolves.toEqual({
       ok: true,
       orderId: "order-1",
+      orderIds: ["order-1"],
     });
     expect(harness.selectQueries[0].locks).toEqual([{ mode: "update", options: undefined }]);
     expect(harness.selectQueries[2].locks).toEqual([{ mode: "update", options: { skipLocked: true } }]);
@@ -163,5 +169,37 @@ describe("purchaseProduct", () => {
     });
     expect(harness.updateWrites).toHaveLength(0);
     expect(harness.insertWrites).toHaveLength(0);
+  });
+
+  it("can fulfill multiple codes in one purchase", async () => {
+    const harness = createPurchaseDb(
+      [
+        [{ id: "user-1", points: 50 }],
+        [{ id: "product-1", pricePoints: 10, isActive: true }],
+        [{ id: "code-1" }, { id: "code-2" }],
+      ],
+      [[{ id: "order-1" }, { id: "order-2" }]],
+    );
+
+    await expect(purchaseProduct("user-1", "product-1", 2, harness.database as never)).resolves.toEqual({
+      ok: true,
+      orderId: "order-1",
+      orderIds: ["order-1", "order-2"],
+    });
+    expect(harness.updateWrites).toEqual([
+      expect.objectContaining({ points: 30 }),
+      expect.objectContaining({ status: "sold", soldToUserId: "user-1" }),
+    ]);
+    expect(harness.insertWrites).toEqual([
+      expect.objectContaining({ gameCodeId: "code-1", pricePoints: 10 }),
+      expect.objectContaining({ gameCodeId: "code-2", pricePoints: 10 }),
+      expect.objectContaining({
+        type: "purchase",
+        points: -20,
+        balanceAfter: 30,
+        orderId: "order-1",
+        note: "Product purchase x2",
+      }),
+    ]);
   });
 });

@@ -63,6 +63,8 @@ export function ProductCard({ product }: ProductCardProps) {
           <img
             src={product.imageUrl}
             alt={product.name}
+            width={1200}
+            height={1200}
             loading="lazy"
             referrerPolicy="no-referrer"
             className="product-card-img"
