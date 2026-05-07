@@ -85,12 +85,30 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
         <section className="px-5 pb-14 pt-12 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-6xl">
             <div className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#090909] shadow-[0_24px_90px_rgba(0,0,0,0.35)]">
+              {/* ── Gradient accent bar ── */}
+              <div
+                className="h-1"
+                style={{ background: "linear-gradient(90deg, #a78bfa, #818cf8, #60a5fa, #38bdf8)" }}
+              />
+
               <div className="relative overflow-hidden border-b border-white/10 px-6 py-8 sm:px-8">
-                <div className="absolute right-8 top-6 hidden size-28 rotate-[-10deg] rounded-3xl border border-white/10 bg-white/[0.04] sm:block" />
-                <div className="absolute right-20 top-24 hidden size-3 rotate-45 bg-white/15 sm:block" />
+                {/* ── Decorative background elements ── */}
+                <div
+                  className="pointer-events-none absolute -right-16 -top-16 hidden size-64 rounded-full opacity-[0.04] blur-3xl sm:block"
+                  style={{ background: "radial-gradient(circle, #818cf8, transparent 70%)" }}
+                />
+                <div className="absolute right-8 top-6 hidden size-28 rotate-[-10deg] rounded-3xl border border-white/[0.06] bg-white/[0.02] sm:block" />
+                <div
+                  className="absolute right-20 top-24 hidden size-3 rotate-45 sm:block"
+                  style={{ background: "linear-gradient(135deg, #a78bfa, #60a5fa)" }}
+                />
+
                 <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-5">
-                    <div className="grid size-16 shrink-0 place-items-center rounded-3xl border border-white/10 bg-white/[0.06] text-white">
+                    <div
+                      className="grid size-16 shrink-0 place-items-center rounded-3xl text-white shadow-lg"
+                      style={{ background: "linear-gradient(135deg, #a78bfa 0%, #818cf8 50%, #60a5fa 100%)", boxShadow: "0 8px 32px rgba(129,140,248,0.25)" }}
+                    >
                       <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <path
                           d="M3 12a9 9 0 109-9m0 0v4m0-4H8m4 5v5l3 2"
@@ -108,7 +126,13 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
                       </p>
                     </div>
                   </div>
-                  <Link href="/products" className="btn-pill-ghost shrink-0 border-white/30 px-5 py-3 text-caption text-white hover:bg-white/10">
+                  <Link
+                    href="/products"
+                    className="inline-flex shrink-0 items-center gap-2 rounded-full border border-white/20 px-5 py-3 text-caption-strong text-white transition hover:border-white/40 hover:bg-white/[0.06]"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                     เลือกดูสินค้า
                   </Link>
                 </div>
@@ -117,8 +141,15 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
               <div className="p-5 sm:p-6">
                 <div aria-live="polite">
                   {params?.success ? (
-                    <div className="alert-success animate-fade-in">
-                      ซื้อสำเร็จแล้ว กดปุ่มดูรหัสในรายการซื้อเพื่อเปิด ID และ Password
+                    <div
+                      className="animate-fade-in flex items-start gap-3 rounded-2xl border px-5 py-4 text-caption-strong"
+                      style={{ background: "rgba(52,211,153,0.08)", borderColor: "rgba(52,211,153,0.2)", color: "#6ee7b7" }}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="mt-0.5 shrink-0" aria-hidden="true">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M22 4L12 14.01l-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <span>ซื้อสำเร็จแล้ว กดปุ่มดูรหัสในรายการซื้อเพื่อเปิด ID และ Password</span>
                     </div>
                   ) : null}
                 </div>
