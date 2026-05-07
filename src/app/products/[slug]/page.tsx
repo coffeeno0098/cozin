@@ -1,4 +1,5 @@
 import { eq, sql } from "drizzle-orm";
+import { AlertCircle, ClipboardList, Coins, Gamepad2, PackageCheck } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -97,118 +98,180 @@ export default async function ProductDetailPage({
   const canBuy = isLoggedIn && isInStock && hasEnoughPoints;
   const stockStatus = getStockStatus(product.availableCodes);
   const errorMessage = query?.error ? errorMessages[query.error] : null;
+  const pointsNeeded = Math.max(product.pricePoints - userPoints, 0);
+  const showPointWarning = isLoggedIn && isInStock && !hasEnoughPoints;
+  const topAlertTitle = errorMessage
+    ? "เกิดข้อผิดพลาด"
+    : !isInStock
+      ? "สินค้าหมด"
+      : showPointWarning
+        ? "Point ไม่พอ"
+        : null;
+  const topAlertDescription = errorMessage
+    ? errorMessage
+    : !isInStock
+      ? "สินค้านี้หมดชั่วคราว กรุณากลับมาดูอีกครั้งภายหลัง"
+      : showPointWarning
+        ? `คุณต้องเติมเพิ่มอีก ${pointsNeeded} Point จึงจะซื้อสินค้านี้ได้`
+        : null;
 
   return (
     <>
       <SiteNav />
 
-      <main id="main-content" className="flex-1">
-        <section className="tile-parchment tile-section">
-          <div className="mx-auto max-w-4xl animate-fade-in-up">
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                {product.imageUrl ? (
-                  <div className="mb-6 aspect-[16/9] overflow-hidden rounded-2xl border border-[var(--hairline)] bg-[var(--background)]">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- Admin-provided image URLs can come from any domain. */}
+      <main id="main-content" className="flex-1 bg-black text-white">
+        <section className="px-4 py-5 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl space-y-6">
+            {topAlertTitle && topAlertDescription ? (
+              <div className="animate-fade-in-up rounded-xl border border-red-500/35 bg-red-500/10 px-5 py-4 text-red-100">
+                <div className="flex gap-4">
+                  <AlertCircle className="mt-0.5 size-5 shrink-0 text-red-300" aria-hidden="true" />
+                  <div>
+                    <p className="text-caption-strong">{topAlertTitle}</p>
+                    <p className="text-caption mt-1 text-red-100/70">{topAlertDescription}</p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="grid gap-8 lg:grid-cols-[minmax(280px,450px)_1fr_390px] lg:items-start">
+              <section className="animate-fade-in-up space-y-8">
+                <div className="aspect-square overflow-hidden rounded-2xl border border-white/10 bg-[#0b0b0b] shadow-[0_22px_70px_rgba(0,0,0,0.42)]">
+                  {product.imageUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element -- Admin-provided image URLs can come from any domain. */
                     <img
                       src={product.imageUrl}
                       alt={product.name}
                       className="h-full w-full object-cover"
                       referrerPolicy="no-referrer"
                     />
-                  </div>
-                ) : null}
-                <div className="flex flex-wrap items-center gap-3">
-                  <p className="text-caption text-[var(--muted-foreground)]">
-                    {product.gameMap}
-                  </p>
-                  <span className={stockStatus.badgeClass}>
-                    {stockStatus.label}
-                  </span>
+                  ) : (
+                    <div className="grid h-full place-items-center bg-gradient-to-br from-[#151515] to-black text-white/65">
+                      <PackageCheck size={72} aria-hidden="true" />
+                    </div>
+                  )}
                 </div>
-                <h1 className="text-hero-display mt-3">{product.name}</h1>
-                {product.description ? (
-                  <p className="text-body mt-4 max-w-2xl text-[var(--muted-foreground)]">
-                    {product.description}
-                  </p>
-                ) : null}
-              </div>
-              <div className="utility-card shrink-0 text-center sm:text-right">
-                <p className="text-fine-print text-[var(--muted-foreground)]">
-                  ราคา
-                </p>
-                <p className="text-display-lg tabular-nums mt-1">
-                  {product.pricePoints}{" "}
-                  <span className="text-lead font-normal">Point</span>
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
 
-        <section className="tile-light tile-section">
-          <div className="mx-auto max-w-4xl">
-            <div className="utility-card animate-fade-in-up delay-1">
-              <div>
-                <h2 className="text-body-strong">สรุปการซื้อ</h2>
-                <dl className="mt-4 grid gap-3 text-caption sm:grid-cols-2">
-                  <div>
-                    <dt className="text-[var(--muted-foreground)]">สินค้า</dt>
-                    <dd className="font-medium mt-0.5">{product.name}</dd>
+                <div>
+                  <div className="flex items-center gap-2 text-white">
+                    <ClipboardList size={18} aria-hidden="true" />
+                    <h2 className="text-body-strong">รายละเอียดสินค้า</h2>
                   </div>
-                  <div>
-                    <dt className="text-[var(--muted-foreground)]">Map</dt>
-                    <dd className="font-medium mt-0.5">{product.gameMap}</dd>
+                  <p className="text-caption mt-5 leading-7 text-white/58">
+                    {product.description || `${product.name} สำหรับ Map ${product.gameMap} พร้อมรับรหัสทันทีหลังซื้อสำเร็จ`}
+                  </p>
+                </div>
+              </section>
+
+              <section className="animate-fade-in-up delay-1 pt-4 lg:pt-6">
+                <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-caption-strong text-white">
+                  <Gamepad2 size={16} aria-hidden="true" />
+                  {product.gameMap}
+                </div>
+
+                <h1 className="mt-6 text-5xl font-semibold leading-tight tracking-[-0.02em] text-white">
+                  {product.name}
+                </h1>
+
+                <div className="mt-5 inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-caption-strong text-white">
+                  <span className={`size-3 rounded-full ${product.availableCodes === 0 ? "bg-red-500" : product.availableCodes <= 2 ? "bg-amber-500" : "bg-emerald-500"}`} aria-hidden="true" />
+                  {stockStatus.label}
+                </div>
+                <p className="text-caption mt-3 text-white/55">
+                  เหลือเพียง {product.availableCodes} ชิ้น
+                </p>
+
+                <div className="my-8 h-px bg-white/10" />
+
+                <div className="flex items-center gap-3">
+                  <span className="grid size-10 place-items-center rounded-full border border-white/10 bg-white/[0.06] text-white">
+                    <Coins size={22} aria-hidden="true" />
+                  </span>
+                  <p className="text-4xl font-semibold tabular-nums text-white">
+                    {product.pricePoints} <span className="text-2xl text-white/65">Point</span>
+                  </p>
+                </div>
+              </section>
+
+              <aside className="animate-fade-in-up delay-2 rounded-2xl border border-white/10 bg-[#0b0b0b] p-7 shadow-[0_18px_70px_rgba(0,0,0,0.42)]">
+                <div className="flex items-center gap-3">
+                  <ClipboardList size={20} aria-hidden="true" />
+                  <h2 className="text-body-strong">สรุปการซื้อ</h2>
+                </div>
+
+                <dl className="mt-8 space-y-5 text-caption">
+                  <div className="flex items-center justify-between gap-5">
+                    <dt className="font-semibold text-white">สินค้า</dt>
+                    <dd className="text-right font-medium text-white/72">{product.name}</dd>
                   </div>
-                  <div>
-                    <dt className="text-[var(--muted-foreground)]">ราคา</dt>
-                    <dd className="font-medium tabular-nums mt-0.5">
+                  <div className="flex items-center justify-between gap-5">
+                    <dt className="font-semibold text-white">Map</dt>
+                    <dd className="text-right font-medium text-white/72">{product.gameMap}</dd>
+                  </div>
+                  <div className="flex items-center justify-between gap-5">
+                    <dt className="font-semibold text-white">ราคา</dt>
+                    <dd className="inline-flex items-center gap-2 text-right font-semibold text-white">
+                      <span className="grid size-6 place-items-center rounded-full border border-white/10 bg-white/[0.06] text-white">
+                        <Coins size={15} aria-hidden="true" />
+                      </span>
                       {product.pricePoints} Point
                     </dd>
                   </div>
-                  <div>
-                    <dt className="text-[var(--muted-foreground)]">
-                      Point ของคุณ
-                    </dt>
-                    <dd className="font-medium tabular-nums mt-0.5">
-                      {isLoggedIn ? `${userPoints} Point` : "ต้องเข้าสู่ระบบก่อน"}
-                    </dd>
-                  </div>
                 </dl>
-              </div>
 
-              <div className="mt-6" aria-live="polite">
-                {session?.user?.id ? (
-                  <form action={buyProductAction} className="space-y-3">
-                    <input type="hidden" name="productId" value={product.id} />
-                    <input type="hidden" name="slug" value={product.slug} />
-                    {errorMessage ? (
-                      <div className="alert-error">{errorMessage}</div>
-                    ) : null}
-                    {!hasEnoughPoints && isInStock ? (
-                      <div className="alert-warning">
-                        ต้องเติมเพิ่มอีก {product.pricePoints - userPoints} Point
-                        เพื่อซื้อสินค้านี้
-                      </div>
-                    ) : null}
-                    <button
-                      type="submit"
-                      disabled={!canBuy}
-                      className="btn-pill disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {!isInStock
-                        ? "สินค้าหมด"
-                        : hasEnoughPoints
-                          ? "ซื้อเลย"
-                          : "Point ไม่พอ"}
-                    </button>
-                  </form>
-                ) : (
-                  <Link href="/login" className="btn-pill inline-flex">
-                    เข้าสู่ระบบเพื่อซื้อ
-                  </Link>
-                )}
-              </div>
+                <div className="my-7 h-px bg-white/10" />
+
+                <div>
+                  <p className="text-caption-strong">Point ของคุณ</p>
+                  <p className={`mt-3 inline-flex items-center gap-2 text-3xl font-semibold tabular-nums ${hasEnoughPoints ? "text-white" : "text-red-300"}`}>
+                    <span className="grid size-8 place-items-center rounded-full border border-white/10 bg-white/[0.06] text-white">
+                      <Coins size={18} aria-hidden="true" />
+                    </span>
+                    {isLoggedIn ? `${userPoints} Point` : "ยังไม่ได้เข้าสู่ระบบ"}
+                  </p>
+                </div>
+
+                <div className="mt-7" aria-live="polite">
+                  {errorMessage ? (
+                    <div className="rounded-xl border border-red-500/35 bg-red-500/10 px-4 py-4 text-red-100">
+                      <p className="text-caption-strong">ไม่สามารถซื้อได้</p>
+                      <p className="text-caption mt-1 text-red-100/70">{errorMessage}</p>
+                    </div>
+                  ) : null}
+                  {showPointWarning ? (
+                    <div className="rounded-xl border border-red-500/35 bg-red-500/10 px-4 py-4 text-red-100">
+                      <p className="text-caption-strong">Point ไม่พอ</p>
+                      <p className="text-caption mt-1 text-red-100/70">
+                        คุณต้องเติมเพิ่มอีก {pointsNeeded} Point จึงจะสามารถซื้อสินค้านี้ได้
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="mt-7">
+                  {session?.user?.id ? (
+                    <form action={buyProductAction}>
+                      <input type="hidden" name="productId" value={product.id} />
+                      <input type="hidden" name="slug" value={product.slug} />
+                      <button
+                        type="submit"
+                        disabled={!canBuy}
+                        className="inline-flex min-h-14 w-full items-center justify-center rounded-xl bg-white px-5 text-caption-strong text-black transition hover:bg-white/85 disabled:cursor-not-allowed disabled:bg-white/12 disabled:text-white/35"
+                      >
+                        {!isInStock
+                          ? "สินค้าหมด"
+                          : hasEnoughPoints
+                            ? "ซื้อเลย"
+                            : "Point ไม่พอ"}
+                      </button>
+                    </form>
+                  ) : (
+                    <Link href="/login" className="inline-flex min-h-14 w-full items-center justify-center rounded-xl bg-white px-5 text-caption-strong text-black transition hover:bg-white/85">
+                      เข้าสู่ระบบเพื่อซื้อ
+                    </Link>
+                  )}
+                </div>
+              </aside>
             </div>
           </div>
         </section>

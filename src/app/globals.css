@@ -1089,38 +1089,46 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  background: var(--card);
-  border: 1px solid var(--hairline);
-  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01)),
+    #0d0d0d;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 26px;
   overflow: hidden;
+  padding: 12px;
   transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
               box-shadow 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .product-card:hover {
-  transform: translateY(-6px);
+  transform: translateY(-4px);
   box-shadow:
-    0 20px 40px rgba(0, 0, 0, 0.08),
-    0 8px 16px rgba(0, 0, 0, 0.04);
+    0 26px 54px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 /* ── Image Area ── */
 .product-card-image-area {
   position: relative;
-  aspect-ratio: 4 / 3;
-  background: linear-gradient(135deg, #1a1a1c 0%, #0f0f11 100%);
+  aspect-ratio: 1 / 1;
+  background:
+    radial-gradient(circle at 50% 44%, rgba(255, 255, 255, 0.08), transparent 54%),
+    linear-gradient(135deg, #101010 0%, #030303 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 .product-card-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
   transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .product-card:hover .product-card-img {
-  transform: scale(1.04);
+  transform: scale(1.015);
 }
 .product-card-img-placeholder {
   display: flex;
@@ -1134,8 +1142,8 @@
 /* ── Map badge (top-left of image) ── */
 .product-card-map-badge {
   position: absolute;
-  top: 16px;
-  left: 16px;
+  top: 12px;
+  left: 12px;
   z-index: 2;
   display: inline-flex;
   align-items: center;
@@ -1155,8 +1163,8 @@
 /* ── Stock pill (top-right of image) ── */
 .product-card-stock-pill {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 12px;
+  right: 12px;
   z-index: 2;
   display: inline-flex;
   align-items: center;
@@ -1197,7 +1205,7 @@
   display: flex;
   flex-direction: column;
   flex: 1;
-  padding: 20px 20px 22px;
+  padding: 16px 10px 2px;
 }
 
 /* ── Meta Row (badge + heart) ── */
@@ -1233,8 +1241,8 @@
 
 /* ── Product name ── */
 .product-card-name {
-  margin-top: 12px;
-  font-size: 18px;
+  margin-top: 10px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1.3;
   letter-spacing: -0.3px;
@@ -1260,27 +1268,33 @@
 /* ── Footer (price + CTA) ── */
 .product-card-footer {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
   margin-top: auto;
-  padding-top: 16px;
+  padding-top: 18px;
 }
 
 /* ── Price Block ── */
 .product-card-price-block {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 2px;
 }
 .product-card-price-label {
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--muted-foreground);
-  letter-spacing: -0.12px;
+  font-size: 15px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.72);
+  letter-spacing: 0;
 }
 .product-card-price-value {
-  font-size: 22px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 24px;
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.4px;
@@ -1298,13 +1312,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 42px;
+  width: 100%;
+  height: 48px;
   padding: 0 22px;
-  border-radius: 14px;
+  border-radius: 18px;
   background: var(--foreground);
   color: var(--background) !important;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   letter-spacing: -0.1px;
   text-decoration: none;
   white-space: nowrap;
@@ -1322,10 +1337,10 @@
 /* ── Product card mobile ── */
 @media (max-width: 640px) {
   .product-card-image-area {
-    aspect-ratio: 16 / 10;
+    aspect-ratio: 1 / 1;
   }
   .product-card-body {
-    padding: 16px 16px 18px;
+    padding: 14px 6px 0;
   }
   .product-card-name {
     font-size: 16px;
