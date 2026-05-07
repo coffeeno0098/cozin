@@ -14,9 +14,6 @@ export default async function Home() {
       <main id="main-content" className="home-black flex-1">
         <section className="home-hero tile-dark tile-section">
           <div className="home-hero-shell mx-auto flex max-w-6xl flex-col items-center text-center">
-            <div className="home-hero-kicker animate-fade-in">
-              Owner-run digital code shop
-            </div>
             <h1 className="home-hero-title animate-fade-in-up" translate="no">
               Cozin
             </h1>

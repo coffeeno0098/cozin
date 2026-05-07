@@ -1,11 +1,8 @@
-import { desc, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
 import { createTopupAction } from "@/app/topup/actions";
 import { auth } from "@/auth";
 import { SiteNav } from "@/components/site-nav";
-import { db } from "@/db";
-import { payments } from "@/db/schema";
 
 type TopupPageProps = {
   searchParams?: Promise<{
@@ -26,12 +23,6 @@ function getTopupErrorMessage(error?: string, reason?: string) {
   return "เติมเงินไม่สำเร็จ กรุณาตรวจสอบลิงก์ซองแล้วลองใหม่";
 }
 
-function getPaymentBadge(status: string) {
-  if (status === "verified") return "badge-success";
-  if (status === "rejected") return "badge-error";
-  return "badge-warning";
-}
-
 export const dynamic = "force-dynamic";
 
 export default async function TopupPage({ searchParams }: TopupPageProps) {
@@ -42,18 +33,6 @@ export default async function TopupPage({ searchParams }: TopupPageProps) {
   }
 
   const params = await searchParams;
-  const paymentRows = await db
-    .select({
-      id: payments.id,
-      status: payments.status,
-      amountBaht: payments.amountBaht,
-      pointsGranted: payments.pointsGranted,
-      createdAt: payments.createdAt,
-    })
-    .from(payments)
-    .where(eq(payments.userId, session.user.id))
-    .orderBy(desc(payments.createdAt))
-    .limit(10);
 
   return (
     <>
@@ -75,7 +54,7 @@ export default async function TopupPage({ searchParams }: TopupPageProps) {
           </div>
         </section>
 
-        {/* ── Form + History ── */}
+        {/* ── Top-up form ── */}
         <section className="tile-light tile-section">
           <div className="mx-auto max-w-4xl space-y-8">
             <div aria-live="polite">
@@ -114,40 +93,6 @@ export default async function TopupPage({ searchParams }: TopupPageProps) {
                 เติม Point
               </button>
             </form>
-
-            {/* ── Recent top-ups ── */}
-            <div className="utility-card animate-fade-in-up delay-2">
-              <h2 className="text-body-strong">รายการเติมเงินล่าสุด</h2>
-              {paymentRows.length === 0 ? (
-                <p className="text-caption mt-3 text-[var(--muted-foreground)]">
-                  ยังไม่มีรายการเติมเงิน
-                </p>
-              ) : (
-                <div className="mt-4 space-y-3">
-                  {paymentRows.map((payment) => (
-                    <div
-                      key={payment.id}
-                      className="flex flex-col gap-2 rounded-xl border border-[var(--hairline)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className={getPaymentBadge(payment.status)}>
-                          {payment.status}
-                        </span>
-                        <p
-                          className="text-fine-print text-[var(--muted-foreground)]"
-                          suppressHydrationWarning
-                        >
-                          {payment.createdAt.toLocaleString("th-TH")}
-                        </p>
-                      </div>
-                      <p className="text-caption tabular-nums text-[var(--muted-foreground)]">
-                        {payment.amountBaht} THB → {payment.pointsGranted} Point
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
         </section>
       </main>

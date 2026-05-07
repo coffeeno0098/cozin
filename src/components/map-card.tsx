@@ -12,27 +12,30 @@ type MapCardProps = {
 
 export function MapCard({ map }: MapCardProps) {
   return (
-    <Link href={`/products/maps/${map.slug}`} className="utility-card group block animate-scale-in overflow-hidden p-0">
+    <Link
+      href={`/products/maps/${map.slug}`}
+      className="utility-card group block animate-scale-in overflow-hidden p-3 transition-transform duration-300 hover:-translate-y-1"
+    >
       {map.imageUrl ? (
-        <div className="aspect-[16/9] overflow-hidden border-b border-[var(--hairline)] bg-[var(--surface-parchment)]">
+        <div className="aspect-[16/10] overflow-hidden rounded-[22px] border border-white/10 bg-[#050505]">
           {/* eslint-disable-next-line @next/next/no-img-element -- Admin-provided image URLs can come from any domain. */}
           <img
             src={map.imageUrl}
             alt={map.name}
             loading="lazy"
             referrerPolicy="no-referrer"
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.015]"
           />
         </div>
       ) : (
-        <div className="aspect-[16/9] border-b border-[var(--hairline)] bg-[var(--surface-parchment)]" />
+        <div className="aspect-[16/10] rounded-[22px] border border-white/10 bg-[#050505]" />
       )}
 
-      <div className="p-6">
+      <div className="px-4 pb-4 pt-6">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-caption text-[var(--muted-foreground)]">Map</p>
-            <h2 className="text-body-strong mt-1.5 truncate" translate="no">
+            <h2 className="mt-1.5 truncate text-2xl font-bold leading-tight tracking-normal text-[var(--foreground)]" translate="no">
               {map.name}
             </h2>
           </div>
